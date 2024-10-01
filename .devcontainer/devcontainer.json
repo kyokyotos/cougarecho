@@ -1,7 +1,7 @@
 {
   "name": "cougarecho",
-  "dockerFile": "../Dockerfile",
-  "context": "..",
+  "dockerFile": "Dockerfile",
+  "context": "../server",
   // Forward port 3000 from the container to the host machine
   "appPort": [
     5000
