@@ -6,7 +6,7 @@ import { getConnectionPool } from "./database.js"; // Use ES module import
 dotenv.config(); // Load environment variables
 
 const app = express();
-const port = 5000; // The port for the server
+const port = 5001; // The port for the server
 
 app.use(cors()); // Enable CORS for cross-origin requests
 app.use(express.json()); // Middleware to parse incoming JSON requests
