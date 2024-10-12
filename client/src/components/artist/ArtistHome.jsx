@@ -2,36 +2,47 @@ import React, { Component, useState } from 'react';
 import { ArtistSidebar } from './Sidebar';
 import { ArtistProfile } from './Profile';
 import { ArtistAblumView } from './ArtistAblumView';
-import { ArtistSongView } from './ArtistSongView';
-
-
+//import { ArtistSongView } from './ArtistSongView';
+import { AlbumAdd } from '../album/AlbumAdd';
+import './Styles.css'
+import Container from 'react-bootstrap/Container';
+import Col from 'react-bootstrap/Col';
+import Row from 'react-bootstrap/Row';
 
 export function ArtistHome(props = "") {
     const [display, setDisplay] = useState(props)
-    const [loading, setLoading] = useState(true)
 
     function GetDisplay() {
-        setLoading(false)
         switch (display) {
             case 'profile':
                 return <ArtistProfile />;
             case 'album':
                 return <ArtistAblumView />;
             case 'song':
-                return <ArtistSongView />;
+                return <> </>;
+            case 'album-add':
+                return <AlbumAdd />;
             default:
                 return <></>;
         }
     }
-        return (
-            <>
-                <div className='artist-home-layout'>
-                    <ArtistSidebar onMenuItemClick={setDisplay} />
-                </div>
-                <div>
-                    <GetDisplay />
-                </div>
-            </>
-        )
+    return (
+        <Container >
+            <Row>
+                <Col>
 
-    };
+                    <ArtistSidebar onMenuItemClick={setDisplay} />
+                </Col>
+                <Col>
+
+                    <GetDisplay />
+                </Col>
+            </Row>
+
+
+
+        </Container>
+
+    )
+
+};

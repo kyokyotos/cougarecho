@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { Sidebar, Menu, MenuItem } from 'react-pro-sidebar';
-import { Link } from 'react-router-dom';
 
 
 const ArtistSidebar = ({ onMenuItemClick }) => {
@@ -32,6 +31,7 @@ const ArtistSidebar = ({ onMenuItemClick }) => {
 
                     <MenuItem onClick={() => onMenuItemClick("profile")}> Profile</MenuItem>
                     <MenuItem onClick={() => onMenuItemClick("album")}> Albums</MenuItem>
+                    <MenuItem onClick={() => onMenuItemClick("album-add")}> Add Album</MenuItem>
                     <MenuItem onClick={() => onMenuItemClick("song")}> Songs</MenuItem>
 
                 </Menu>
@@ -39,6 +39,6 @@ const ArtistSidebar = ({ onMenuItemClick }) => {
         </>
     );
 }
-;
+    ;
 
 export { ArtistSidebar };
