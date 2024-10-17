@@ -1,22 +1,9 @@
-import React, { Component } from 'react';
-import { Container } from 'react-bootstrap';
-import { Header } from './Header.jsx';
-import { Footer } from './Footer.jsx';
+import React from 'react';
 
-export class Layout extends Component {
-  static displayName = Layout.name;
-
-  render() {
-    return (
-      <>
-        <Header />
-        <main>
-          <Container tag="main">
-            {this.props.children}
-          </Container>
-        </main>
-        <Footer />
-      </>
-    );
-  }
-}
+export const Layout = ({ children }) => {
+  return (
+    <div className="min-h-screen bg-[#005743]">
+      <main>{children}</main>
+    </div>
+  );
+};
