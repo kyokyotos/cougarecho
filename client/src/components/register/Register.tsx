@@ -11,22 +11,23 @@ const Register = () => {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    
     if (password !== confirmPassword) {
-      setError('Your passwords don\'t match :0');
+      setError("Passwords don't match :0");
       return;
     }
+
+    // If passwords match, proceed with the registration process
     console.log('Register attempt', { username, password, userType });
     // Add your registration logic here
     navigate('/confirm');
   };
 
-  const isRegisterDisabled = username === '' || password === '' || confirmPassword === '' || password !== confirmPassword;
-
   return (
     <div className="flex h-screen bg-[#0B3B24]">
       <div className="w-1/2 p-12 flex flex-col justify-between">
-        <Link
-          to="/"
+        <Link 
+          to="/" 
           className="text-[#FAF5CE] text-2xl font-bold hover:text-[#FFFAD6] transition-colors duration-300"
         >
           echo
@@ -72,8 +73,7 @@ const Register = () => {
             </div>
             <button
               type="submit"
-              disabled={isRegisterDisabled}
-              className={`w-full p-4 rounded-full text-[#FAF5CE] ${isRegisterDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'}`}
+              className="w-full p-4 rounded-full bg-[#4a8f4f] text-[#FAF5CE] hover:bg-[#5aa55f]"
             >
               Register
             </button>
