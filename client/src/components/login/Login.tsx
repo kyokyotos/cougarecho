@@ -4,20 +4,28 @@ import { Link, useNavigate } from 'react-router-dom';
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Your passwords don\'t match :0');
+      return;
+    }
     console.log('Login attempt', { username, password });
     // Add your login logic here
     navigate('/homepage');
   };
 
+  const isLoginDisabled = username === '' || password === '' || confirmPassword === '';
+
   return (
     <div className="flex h-screen bg-[#0B3B24]">
       <div className="w-1/2 p-12 flex flex-col justify-between">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="text-[#FAF5CE] text-2xl font-bold hover:text-[#FFFAD6] transition-colors duration-300"
         >
           echo
@@ -39,9 +47,20 @@ const LoginPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
             />
-            <button 
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
+            />
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
+            <button
               type="submit"
-              className="w-full p-4 rounded-full bg-[#4a8f4f] text-[#FAF5CE] hover:bg-[#5aa55f]"
+              disabled={isLoginDisabled}
+              className={`w-full p-4 rounded-full text-[#FAF5CE] ${isLoginDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'}`}
             >
               Login
             </button>

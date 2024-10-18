@@ -5,6 +5,7 @@ import Homepage from './components/Homepage/homepage';
 import Login from './components/login/Login'; 
 import Register from "./components/register/Register";
 import Confirm from './components/confirm/Confirm';// Updated import path
+import Admin from "./components/admin/Admin";
 
 const AppRoutes = [
   {
@@ -34,6 +35,10 @@ const AppRoutes = [
   {
     path: '/confirm',
     element: <Confirm />
+  },
+  {
+    path: '/admin',
+    element: <Admin />
   }
 ];
 

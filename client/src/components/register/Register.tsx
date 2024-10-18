@@ -4,22 +4,29 @@ import { Link, useNavigate } from 'react-router-dom';
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [userType, setUserType] = useState('Listener');
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
+    if (password !== confirmPassword) {
+      setError('Your passwords don\'t match :0');
+      return;
+    }
     console.log('Register attempt', { username, password, userType });
     // Add your registration logic here
-    // Assuming registration is successful, navigate to the confirm page
     navigate('/confirm');
   };
+
+  const isRegisterDisabled = username === '' || password === '' || confirmPassword === '' || password !== confirmPassword;
 
   return (
     <div className="flex h-screen bg-[#0B3B24]">
       <div className="w-1/2 p-12 flex flex-col justify-between">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="text-[#FAF5CE] text-2xl font-bold hover:text-[#FFFAD6] transition-colors duration-300"
         >
           echo
@@ -41,6 +48,16 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
             />
+            <input
+              type="password"
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
+            />
+            {error && (
+              <p className="text-red-500 text-sm">{error}</p>
+            )}
             <div className="flex items-center space-x-4 text-[#FAF5CE]">
               <span>I am a:</span>
               <select
@@ -53,9 +70,10 @@ const Register = () => {
                 <option>Admin</option>
               </select>
             </div>
-            <button 
+            <button
               type="submit"
-              className="w-full p-4 rounded-full bg-[#4a8f4f] text-[#FAF5CE] hover:bg-[#5aa55f]"
+              disabled={isRegisterDisabled}
+              className={`w-full p-4 rounded-full text-[#FAF5CE] ${isRegisterDisabled ? 'bg-gray-500 cursor-not-allowed' : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'}`}
             >
               Register
             </button>
