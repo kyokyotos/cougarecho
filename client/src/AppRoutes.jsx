@@ -2,8 +2,9 @@ import { Counter } from "./components/Counter";
 import Home from './components/Home'
 import { ArtistHome } from './components/artist/ArtistHome'
 import Homepage from './components/Homepage/homepage';
-//import { ArtistAlbumView } from './components/artist/ArtistAblumView'
-//import { ArtistSongView } from './components/artist/ArtistSongView'
+import Login from './components/login/Login'; 
+import Register from "./components/register/Register";
+import Confirm from './components/confirm/Confirm';// Updated import path
 
 const AppRoutes = [
   {
@@ -22,14 +23,18 @@ const AppRoutes = [
     path: '/homepage',
     element: <Homepage />
   },
-  //{
-  //path: '/artist/albumview',
-  //element: <ArtistAlbumView />
-  //},
-  /*{
-    path: '/artist/songview',
-    element: <ArtistSongView />
-  }*/
+  {
+    path: '/login',
+    element: <Login />
+  },
+  {
+    path: '/register',
+    element: <Register />
+  },
+  {
+    path: '/confirm',
+    element: <Confirm />
+  }
 ];
 
 export default AppRoutes;
