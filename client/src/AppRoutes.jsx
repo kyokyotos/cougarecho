@@ -5,11 +5,15 @@ import Login from './components/login/Login';
 import Register from "./components/register/Register";
 import Confirm from './components/confirm/Confirm';// Updated import path
 import Admin from "./components/admin/Admin";
-import AlbumComp from './components/album/AlbumComp';
 import Edit from './components/edit/Edit';
 import Search from './components/search/Search';
 import Listener from './components/listener/Listener';
 import Artist from "./components/artistpage/Artist";
+import AlbumPage from "./components/album/AlbumComp";
+import Playlist from './components/playlist/Playlist';
+import Newplaylist from './components/playlist/Newplaylist';
+import Player from './components/songplayer/Player';
+
 
 
 const AppRoutes = [
@@ -42,10 +46,6 @@ const AppRoutes = [
     element: <Admin />
   },
   {
-    path: '/album',
-    element: <AlbumComp />
-  },
-  {
     path: '/useredit',
     element: <Edit />
   },
@@ -63,6 +63,26 @@ const AppRoutes = [
   {
     path: '/artist',
     element: <Artist />
+  },
+  
+  {
+    path: '/album',
+    element: <AlbumPage />
+  },
+  
+  {
+    path: '/playlist',
+    element: <Playlist />
+  },
+  
+  {
+    path: '/newplaylist',
+    element: <Newplaylist />
+  },
+  
+  {
+    path: '/player',
+    element: <Player />
   }
 ];
 
