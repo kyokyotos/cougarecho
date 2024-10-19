@@ -1,1 +1,3 @@
-// to see ur code add /newplaylist to local host
+
+//make sure to export default
+//follow format in app routes to  see ur code 
