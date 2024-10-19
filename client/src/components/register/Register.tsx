@@ -9,15 +9,38 @@ const Register = () => {
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
+  const validatePassword = (password: string) => {
+    const minLength = 8;
+    const hasCapital = /[A-Z]/.test(password);
+    const hasNumber = /[0-9]/.test(password);
+    
+    if (password.length < minLength) {
+      return "Password must be at least 8 characters long";
+    }
+    if (!hasCapital) {
+      return "Password must contain at least one capital letter";
+    }
+    if (!hasNumber) {
+      return "Password must contain at least one number";
+    }
+    return null;
+  };
+
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (password !== confirmPassword) {
-      setError("Passwords don't match :0");
+    const passwordError = validatePassword(password);
+    if (passwordError) {
+      setError(passwordError);
       return;
     }
 
-    // If passwords match, proceed with the registration process
+    if (password !== confirmPassword) {
+      setError("Passwords don't match");
+      return;
+    }
+
+    // If passwords match and meet the criteria, proceed with the registration process
     console.log('Register attempt', { username, password, userType });
     // Add your registration logic here
     navigate('/confirm');

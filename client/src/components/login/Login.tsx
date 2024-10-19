@@ -4,22 +4,17 @@ import { Link, useNavigate } from 'react-router-dom';
 const LoginPage = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (password !== confirmPassword) {
-      setError('Your passwords don\'t match :0');
-      return;
-    }
     console.log('Login attempt', { username, password });
     // Add your login logic here
     navigate('/homepage');
   };
 
-  const isLoginDisabled = username === '' || password === '' || confirmPassword === '';
+  const isLoginDisabled = username === '' || password === '';
 
   return (
     <div className="flex h-screen bg-[#0B3B24]">
@@ -45,13 +40,6 @@ const LoginPage = () => {
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
-            />
-            <input
-              type="password"
-              placeholder="Confirm Password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
               className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
             />
             {error && (
