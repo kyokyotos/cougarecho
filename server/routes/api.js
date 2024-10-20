@@ -105,8 +105,14 @@ router.post('/login', async (req, res) => {
       SECRET_KEY,
       { expiresIn: '1h' }
     );
-
-    res.json({ token });
+    /*
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+    });
+    */
+    const role_id = user.role_id
+    res.json({ role_id, token });
   });
 });
 

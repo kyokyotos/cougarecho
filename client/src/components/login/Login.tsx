@@ -1,16 +1,61 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useRef, useState, useEffect, Ref, MutableRefObject, RefObject, Children } from 'react';
+import { Link, useNavigate, useLocation, HistoryRouterProps, RouteObject, NavLinkRenderProps } from 'react-router-dom';
+import axios from '../../api/axios';
+import useAuth from '../../hooks/useAuth';
+import { Context } from 'vm';
+const LOGIN_URL = '/login';
 
 const LoginPage = () => {
+  const { setAuth }: Context = useAuth();
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/"
+
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
-  const navigate = useNavigate();
+  const [success, setSuccess] = useState(false);
+  const [errMsg, setErrMsg] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+
+  useEffect(() => {
+    setErrMsg('');
+  }, [username, password])
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('Login attempt', { username, password });
     // Add your login logic here
+    try {
+      const response = await axios.post(LOGIN_URL,
+        JSON.stringify({ user_name: username, password }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: false
+        }
+      );
+      console.log(JSON.stringify(response?.data));
+      //console.log(JSON.stringify(response));
+      const accessToken = response?.data?.accessToken;
+      const role = response?.data?.role;
+      console.log("role: " + role.value)
+      setAuth({ username, password, role, accessToken });
+      setUsername('');
+      setPassword('');
+      navigate(from, { replace: true });
+    } catch (err) {
+      if (!err?.response) {
+        setErrMsg('No Server Response');
+      } else if (err.response?.status === 400) {
+        setErrMsg('Missing Username or Password');
+      } else if (err.response?.status === 401) {
+        setErrMsg('Unauthorized');
+      } else {
+        setErrMsg('Login Failed');
+      }
+
+    }
+
     navigate('/homepage');
   };
 
@@ -42,8 +87,8 @@ const LoginPage = () => {
               onChange={(e) => setPassword(e.target.value)}
               className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
             />
-            {error && (
-              <p className="text-red-500 text-sm">{error}</p>
+            {errMsg && (
+              <p className="text-red-500 text-sm">{errMsg}</p>
             )}
             <button
               type="submit"
@@ -77,3 +122,71 @@ const LoginPage = () => {
 };
 
 export default LoginPage;
+
+/*
+
+import React, { useRef, useState, useEffect, useContext } from 'react';
+import AuthContext from '../../context/AuthProvider';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import axios from '../../api/axios';
+import useAuth from '../../hooks/useAuth';
+
+const LOGIN_URL = '/login';
+
+const LoginPage = () => {
+  const { ...setAuth } = useAuth();
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/"
+
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [success, setSuccess] = useState(false);
+  const [errMsg, setErrMsg] = useState('');
+
+  useEffect(() => {
+    setErrMsg('');
+  }, [username, password])
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    console.log('Login attempt', { username, password });
+    // Add your login logic here
+    try {
+      const response = await axios.post(LOGIN_URL,
+        JSON.stringify({ user_name: username, password }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: false
+        }
+      );
+      const data = await response.data
+      //localStorage.setItem('token', data.token)
+      const token = localStorage.getItem('token');
+      const payload = token?.split('.')[1];
+      console.log(jwt)
+      console.log(JSON.parse(atob(payload)))
+      const role = (JSON.parse(atob(payload)))[1]
+      console.log(token + "\nrole: " + role);
+      setAuth({})
+      setUsername('')
+      setPassword('')
+      setSuccess(true)
+      console.log(response.data.role)
+    } catch (err) {
+      if (!err?.response) {
+        setErrMsg('No Server Response');
+      } else if (err.response?.status === 400) {
+        setErrMsg('Missing Username or Password');
+      } else if (err.response?.status === 401) {
+        setErrMsg('Unauthorized');
+      } else {
+        setErrMsg('Login Failed');
+      }
+
+    }
+
+    navigate('/homepage');
+  };
+*/
