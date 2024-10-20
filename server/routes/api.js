@@ -112,7 +112,7 @@ router.post('/login', async (req, res) => {
     });
     */
     const role_id = user.role_id
-    res.json({ role_id, token });
+    res.json({ token });
   });
 });
 

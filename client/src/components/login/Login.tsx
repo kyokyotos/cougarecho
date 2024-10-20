@@ -5,6 +5,8 @@ import useAuth from '../../hooks/useAuth';
 import { Context } from 'vm';
 const LOGIN_URL = '/login';
 
+
+
 const LoginPage = () => {
   const { setAuth }: Context = useAuth();
 
@@ -16,15 +18,15 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const [success, setSuccess] = useState(false);
   const [errMsg, setErrMsg] = useState('');
-
+  const [role_id, setRole_id] = useState();
 
   useEffect(() => {
     setErrMsg('');
   }, [username, password])
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    console.log('Login attempt', { username, password });
+    //console.log('Login attempt', { username, password });
     // Add your login logic here
     try {
       const response = await axios.post(LOGIN_URL,
@@ -37,12 +39,16 @@ const LoginPage = () => {
       console.log(JSON.stringify(response?.data));
       //console.log(JSON.stringify(response));
       const accessToken = response?.data?.accessToken;
-      const role = response?.data?.role;
-      console.log("role: " + role.value)
-      setAuth({ username, password, role, accessToken });
+      const role_id = response?.data?.roles;
+      setAuth({ username, password, roles: role_id, accessToken });
       setUsername('');
       setPassword('');
-      navigate(from, { replace: true });
+      if (from !== "/") {
+        navigate(from, { replace: true });
+      } else {
+
+      }
+
     } catch (err) {
       if (!err?.response) {
         setErrMsg('No Server Response');
@@ -56,7 +62,7 @@ const LoginPage = () => {
 
     }
 
-    navigate('/homepage');
+    //navigate('/homepage');
   };
 
   const isLoginDisabled = username === '' || password === '';
