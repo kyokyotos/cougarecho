@@ -1,54 +1,34 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { Search, Home, Settings, Menu, PlusCircle, User, Disc, X, Music, LogOut } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Search, Home, Settings, Menu, PlusCircle, User, Play, X, Music, LogOut } from 'lucide-react';
 
-const Homepage: React.FC = () => {
-  const navigate = useNavigate();
+const LibraryPage: React.FC = () => {
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [accountType, setAccountType] = useState('listener'); // Can be 'listener', 'admin', or 'artist'
+  const [accountType, setAccountType] = useState('listener');
+  const [playlists, setPlaylists] = useState([
+    { id: 1, title: "My Playlist 1", imageUrl: "/api/placeholder/160/160" },
+    { id: 2, title: "My Playlist 2", imageUrl: "/api/placeholder/160/160" },
+    { id: 3, title: "My Playlist 3", imageUrl: "/api/placeholder/160/160" },
+    { id: 4, title: "My Playlist 4", imageUrl: "/api/placeholder/160/160" },
+    { id: 5, title: "My Playlist 5", imageUrl: "/api/placeholder/160/160" },
+    { id: 6, title: "My Playlist 6", imageUrl: "/api/placeholder/160/160" },
+  ]);
 
   useEffect(() => {
-    document.title = 'Homepage';
+    document.title = "Your Library";
     fetchAccountType();
   }, []);
 
   const fetchAccountType = () => {
-    // This is a mock API call. In a real application, you'd fetch this from your backend
     setTimeout(() => {
       const types = ['listener', 'admin', 'artist'];
       setAccountType(types[Math.floor(Math.random() * types.length)]);
     }, 1000);
   };
 
-  const handleSearchClick = () => {
-    navigate('/search');
-  };
-
-  const handleArtistClick = (artistId: number) => {
-    navigate(`/artist/${artistId}`);
-  };
-
-  const handleAlbumClick = (albumId: number) => {
-    navigate(`/album/${albumId}`);
-  };
-
   const handleCreatePlaylist = () => {
     console.log("Create new playlist");
   };
-
-  // Placeholder data (replace with real data in production)
-  const artists = [
-    { id: 1, name: "The Melodics" },
-    { id: 2, name: "Rhythm Collective" },
-    { id: 3, name: "Harmony Heights" },
-    { id: 4, name: "Sonic Waves" }
-  ];
-
-  const albums = [
-    { id: 1, name: "Echoes of Dawn", artist: "The Melodics" },
-    { id: 2, name: "Urban Rhythms", artist: "Rhythm Collective" },
-    { id: 3, name: "Celestial Harmonies", artist: "Harmony Heights" }
-  ];
 
   return (
     <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans">
@@ -81,13 +61,13 @@ const Homepage: React.FC = () => {
               <ul className="space-y-4">
                 <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
                 <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
-                <li><Link to="/library" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
+                <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
                 <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
               </ul>
             </nav>
             <div className="mt-auto">
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
-                <User className="w-5 h-5 mr-3" /> Profile ({accountType})
+                <User className="w-5 h-5 mr-3" /> Profile
               </Link>
               <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <LogOut className="w-5 h-5 mr-3" /> Log out
@@ -98,18 +78,16 @@ const Homepage: React.FC = () => {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col p-8 overflow-y-auto">
         {/* Top bar */}
-        <div className="bg-[#121212] p-4 flex justify-between items-center">
+        <div className="flex items-center justify-between mb-8">
           <div className="flex-1 max-w-xl">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder="Search for Song or Artist"
-                className="w-full bg-[#2A2A2A] rounded-full py-2 pl-10 pr-4 text-sm text-[#EBE7CD] focus:outline-none focus:ring-2 focus:ring-white cursor-pointer"
-                onClick={handleSearchClick}
-                readOnly
+                placeholder="What do you want to listen to?"
+                className="w-full bg-[#2A2A2A] rounded-full py-2 pl-10 pr-4 text-sm text-[#EBE7CD] focus:outline-none focus:ring-2 focus:ring-white"
               />
             </div>
           </div>
@@ -123,46 +101,22 @@ const Homepage: React.FC = () => {
           </div>
         </div>
 
-        {/* Main Content */}
-        <main className="flex-1 p-8 overflow-y-auto">
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Explore New Artists</h2>
-            <div className="grid grid-cols-4 gap-4">
-              {artists.map((artist) => (
-                <button
-                  key={artist.id}
-                  aria-label={`Explore ${artist.name}`}
-                  className="w-full aspect-square bg-[#2A2A2A] rounded-full flex flex-col items-center justify-center hover:bg-[#3A3A3A] transition-colors"
-                  onClick={() => handleArtistClick(artist.id)}
-                >
-                  <User className="w-1/2 h-1/2 text-gray-400 mb-2" />
-                  <span className="text-sm text-center px-2">{artist.name}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold mb-4">Explore New Albums</h2>
-            <div className="grid grid-cols-3 gap-4">
-              {albums.map((album) => (
-                <button
-                  key={album.id}
-                  aria-label={`Explore ${album.name} by ${album.artist}`}
-                  className="w-full aspect-square bg-[#2A2A2A] rounded-lg hover:bg-[#3A3A3A] transition-colors flex flex-col items-center justify-center p-4"
-                  onClick={() => handleAlbumClick(album.id)}
-                >
-                  <Disc className="w-1/2 h-1/2 text-gray-400 mb-2" />
-                  <span className="text-sm font-semibold text-center">{album.name}</span>
-                  <span className="text-xs text-gray-400 text-center mt-1">{album.artist}</span>
-                </button>
-              ))}
-            </div>
-          </section>
-        </main>
+        {/* Library content */}
+        <div className="flex-1">
+          <h1 className="text-3xl font-bold mb-6">Your Library</h1>
+          <div className="grid grid-cols-3 gap-4">
+            {playlists.map((playlist) => (
+              <div key={playlist.id} className="bg-[#1A1A1A] rounded-lg p-4 hover:bg-[#282828] transition-colors duration-200 cursor-pointer">
+                <img src={playlist.imageUrl} alt={playlist.title} className="w-full aspect-square object-cover rounded-md mb-4" />
+                <h3 className="text-lg font-semibold">{playlist.title}</h3>
+                <p className="text-sm text-gray-400">Playlist</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
 };
 
-export default Homepage;
+export default LibraryPage;

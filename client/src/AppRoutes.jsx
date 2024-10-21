@@ -1,4 +1,3 @@
-import { Counter } from "./components/Counter";
 import Home from './components/Home';
 import Homepage from './components/Homepage/homepage';
 import Login from './components/login/Login'; 
@@ -9,16 +8,17 @@ import Edit from './components/edit/Edit';
 import Search from './components/search/Search';
 import Listener from './components/listener/Listener';
 import Artist from "./components/artistpage/Artist";
+import AlbumPage from "./components/albumpage/Albumpage";
+import Library from "./components/library/Library";
+import Newalbum from './components/albumpage/Newalbum';
+import Playlist from './components/playlist/Playlist';
+import Newplaylist from './components/playlist/Newplaylist';
 
 
 const AppRoutes = [
   {
     index: true,
     element: <Home />
-  },
-  {
-    path: '/counter',
-    element: <Counter />
   },
   {
     path: '/homepage',
@@ -58,7 +58,35 @@ const AppRoutes = [
   {
     path: '/artist',
     element: <Artist />
+  },
+
+  {
+    path: '/album',
+    element: <AlbumPage />
+  },
+
+  {
+    path: '/userlibrary',
+    element: <Library />
+  },
+
+  {
+    path: '/newalbum',
+    element: <Newalbum />
+  },
+
+  {
+    path: '/playlist',
+    element: <Playlist />
+  },
+
+  {
+    path: '/newplaylist',
+    element: <Newplaylist />
   }
+  
+  
+  
   
  
 ];

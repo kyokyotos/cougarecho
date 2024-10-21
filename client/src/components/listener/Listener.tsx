@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { Search, Home, Settings, Menu, User, Edit2 } from 'lucide-react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { Search, Home, Settings, Menu, PlusCircle, User, Edit2, Loader, X, Music, LogOut } from 'lucide-react';
 
-// Mock API (unchanged)
+// Mock API
 const mockApi = {
-  fetchUserProfile: () => new Promise<{ name: string; playlists: number }>(resolve => 
-    setTimeout(() => resolve({ name: 'anailemone', playlists: 70 }), 500)
+  fetchUserProfile: () => new Promise(resolve => 
+    setTimeout(() => resolve({ name: 'John Doe', playlists: 12 }), 500)
   ),
-  fetchPlaylists: () => new Promise<Array<{ id: number; name: string; imageUrl: string }>>(resolve => 
+  fetchPlaylists: () => new Promise(resolve => 
     setTimeout(() => resolve([
       { id: 1, name: 'My Playlist 1', imageUrl: '/api/placeholder/120/120' },
       { id: 2, name: 'My Playlist 2', imageUrl: '/api/placeholder/120/120' },
@@ -16,12 +16,15 @@ const mockApi = {
   ),
 };
 
-const UserProfile: React.FC = () => {
-  const [userProfile, setUserProfile] = useState<{ name: string; playlists: number }>({ name: '', playlists: 0 });
-  const [playlists, setPlaylists] = useState<Array<{ id: number; name: string; imageUrl: string }>>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
+const Listener = () => {
+  const [userProfile, setUserProfile] = useState({ name: '', playlists: 0 });
+  const [playlists, setPlaylists] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [searchValue, setSearchValue] = useState('');
+  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -43,53 +46,90 @@ const UserProfile: React.FC = () => {
     };
 
     fetchData();
-  }, []);
 
-  const handleSearchClick = () => {
-    navigate('/search');
+    const searchParams = new URLSearchParams(location.search);
+    const query = searchParams.get('q');
+    if (query) {
+      setSearchValue(query);
+    }
+  }, [location]);
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchValue(value);
+    if (value.length > 0) {
+      navigate(`/search?q=${encodeURIComponent(value)}`, { replace: true });
+    } else {
+      navigate('/listener', { replace: true });
+    }
   };
 
-  const handleSettingsClick = () => {
-    navigate('/useredit');
+  const handleCreatePlaylist = () => {
+    console.log("Create new playlist");
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
-        <div className="w-10 h-10 border-t-2 border-green-500 rounded-full animate-spin"></div>
+      <div className="flex items-center justify-center h-screen bg-[#121212]">
+        <Loader className="w-10 h-10 text-[#1ED760] animate-spin" />
       </div>
     );
   }
 
   if (error) {
     return (
-      <div className="flex items-center justify-center h-screen bg-black">
+      <div className="flex items-center justify-center h-screen bg-[#121212]">
         <p className="text-red-500">{error}</p>
       </div>
     );
   }
 
   return (
-    <div className="bg-black text-[#EBE7CD] min-h-screen flex font-sans">
+    <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans">
       {/* Sidebar */}
-      <div className="w-16 flex flex-col items-center py-4 bg-black border-r border-gray-800">
+      <div className={`w-16 flex flex-col items-center py-4 bg-black border-r border-gray-800 transition-all duration-300 ease-in-out ${isMenuExpanded ? 'w-64' : 'w-16'}`}>
         <div className="flex flex-col items-center space-y-4 mb-8">
-          <button className="text-[#1ED760] hover:text-white">
+          <button onClick={() => setIsMenuExpanded(!isMenuExpanded)} className="text-[#1ED760] hover:text-white" aria-label="Menu">
             <Menu className="w-6 h-6" />
           </button>
         </div>
-        <div className="flex-grow flex flex-col space-y-2">
-          {[1, 2, 3, 4].map((_, index) => (
-            <div key={index} className="w-10 h-10 bg-gray-800 rounded-sm"></div>
-          ))}
+        <div className="flex-grow"></div>
+        <div className="mt-auto flex flex-col items-center space-y-4 mb-4">
+          <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
+            <PlusCircle className="w-6 h-6" />
+          </button>
+          <Link to="/useredit" aria-label="User Profile" className="text-[#1ED760] hover:text-white">
+            <User className="w-6 h-6" />
+          </Link>
         </div>
-        <button className="mt-auto mb-4 text-[#EBE7CD] hover:text-white">
-          <User className="w-6 h-6" />
-        </button>
-        <button className="mb-4 w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white">
-          <span className="text-2xl">+</span>
-        </button>
       </div>
+
+      {/* Expandable Menu */}
+      {isMenuExpanded && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+          <div className="bg-[#121212] w-64 h-full p-4">
+            <button onClick={() => setIsMenuExpanded(false)} className="mb-8 text-[#1ED760]">
+              <X className="w-6 h-6" />
+            </button>
+            <nav>
+              <ul className="space-y-4">
+                <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
+                <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
+                <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
+                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
+              </ul>
+            </nav>
+            <div className="mt-auto">
+              <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+                <User className="w-5 h-5 mr-3" /> Profile
+              </Link>
+              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+                <LogOut className="w-5 h-5 mr-3" /> Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col p-8">
@@ -101,39 +141,41 @@ const UserProfile: React.FC = () => {
               <input
                 type="text"
                 placeholder="Search for Song or Artist"
-                className="w-full bg-[#2A2A2A] rounded-full py-2 pl-10 pr-4 text-sm text-[#EBE7CD] focus:outline-none focus:ring-2 focus:ring-white cursor-pointer"
-                onClick={handleSearchClick}
-                readOnly
+                className="w-full bg-[#2A2A2A] rounded-full py-2 pl-10 pr-4 text-sm text-[#EBE7CD] focus:outline-none focus:ring-2 focus:ring-white"
+                value={searchValue}
+                onChange={handleSearchChange}
               />
             </div>
           </div>
           <div className="flex items-center space-x-4">
-            <button className="text-[#1ED760] hover:text-white">
+            <Link to="/homepage" className="text-[#1ED760] hover:text-white">
               <Home className="w-6 h-6" />
-            </button>
-            <button className="text-[#1ED760] hover:text-white" onClick={handleSettingsClick}>
+            </Link>
+            <Link to="/useredit" className="text-[#1ED760] hover:text-white">
               <Settings className="w-6 h-6" />
-            </button>
+            </Link>
           </div>
         </div>
 
         {/* Profile section */}
-        <div className="bg-[#1A1A1A] rounded-lg p-6 mb-8 relative">
-          <div className="flex items-start mb-4">
-            <div className="w-32 h-32 bg-gray-700 rounded-full mr-6"></div>
-            <div>
-              <p className="text-sm text-gray-400">Profile</p>
-              <h2 className="text-4xl font-bold">{userProfile.name}</h2>
-              <p className="text-sm text-gray-400">{userProfile.playlists} Playlists</p>
+        <div className="bg-[#1A1A1A] rounded-lg p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <div className="w-32 h-32 bg-gray-700 rounded-full mr-6"></div>
+              <div>
+                <p className="text-sm text-gray-400">Profile</p>
+                <h2 className="text-4xl font-bold">{userProfile.name}</h2>
+                <p className="text-sm text-gray-400">{userProfile.playlists} Playlists</p>
+              </div>
             </div>
+            <Link to="/useredit" className="text-gray-400 hover:text-white">
+              <Edit2 className="w-5 h-5" />
+            </Link>
           </div>
-          <button className="absolute top-4 right-4 text-[#EBE7CD] hover:text-white">
-            <Edit2 className="w-5 h-5" />
-          </button>
         </div>
 
         {/* Playlists section */}
-        <div>
+        <div className="bg-[#1A1A1A] rounded-lg p-6">
           <h3 className="text-xl font-bold mb-4">All Playlists</h3>
           <div className="grid grid-cols-3 gap-4">
             {playlists.map((playlist) => (
@@ -148,4 +190,4 @@ const UserProfile: React.FC = () => {
   );
 };
 
-export default UserProfile;
+export default Listener;
