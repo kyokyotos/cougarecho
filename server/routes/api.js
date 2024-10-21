@@ -1,9 +1,14 @@
 import express from "express";
 import sql from "mssql";
 import { getConnectionPool } from "../database.js"; // Use ES module import
-import DateTime from "mssql";
+import bcrypt from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import dotenv from "dotenv";
+
+dotenv.config();
 
 const router = express.Router();
+const SECRET_KEY = process.env.ACCESS_TOKEN_SECRET;
 
 router.get("/data", async (req, res) => {
   try {
@@ -70,5 +75,46 @@ router.post('/album/insert', async (req, res) => {
     res.status(500).send('Error inserting row');
   }
 });
+
+router.post('/login', async (req, res) => {
+  const { user_name, password } = req.body;
+  //console.log(user_name + " " + password)
+  if (!user_name || !password) {
+    return res.status(400).json({ message: 'All fields are required.' });
+  }
+  let myQuery =
+    'SELECT user_id, password_hash, role_id FROM [User] WHERE username = @user_name;';
+  const request = new sql.Request();
+  request.input('user_name', sql.NVarChar, user_name);
+  request.query(myQuery, async (err, result) => {
+
+
+    const user = result.recordset[0];
+    if (!user) {
+      console.log(result.recordset.length)
+      return res.status(401).json({ message: 'Invalid credentials.' });
+    }
+    const isMatch = await bcrypt.compare(password, user.password_hash);
+    //console.log("user.password_hash:\n" + user.password_hash)
+
+    if (!isMatch) {
+      return res.status(401).json({ message: 'Invalid credentials.' });
+    }
+    const token = jwt.sign(
+      { id: user.user_id, role: user.role_id },
+      SECRET_KEY,
+      { expiresIn: '1h' }
+    );
+    /*
+    res.cookie('token', token, {
+      httpOnly: true,
+      secure: true,
+    });
+    */
+    const role_id = user.role_id
+    res.json({ token });
+  });
+});
+
 // End Josh Lewis
 export default router;
