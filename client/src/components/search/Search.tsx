@@ -3,9 +3,11 @@ import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Play, X, Music, LogOut } from 'lucide-react';
 
 interface MusicItem {
+  song_id?: string;
+  artist_id?: string;
+  album_id?: string;
   title: string;
   artist: string;
-  id?: string;
 }
 
 interface SearchResults {
@@ -18,9 +20,9 @@ const SearchPage: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [recentSearches, setRecentSearches] = useState<MusicItem[]>([
-    { title: 'TBH', artist: 'PartyNextDoor', id: '1' },
-    { title: 'Gasoline', artist: 'The Weeknd', id: '2' },
-    { title: 'Too Fast', artist: 'Sonder', id: '3' },
+    { title: 'TBH', artist: 'PartyNextDoor', song_id: '1', artist_id: 'a1', album_id: 'alb1' },
+    { title: 'Gasoline', artist: 'The Weeknd', song_id: '2', artist_id: 'a2', album_id: 'alb2' },
+    { title: 'Too Fast', artist: 'Sonder', song_id: '3', artist_id: 'a3', album_id: 'alb3' },
   ]);
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
 
@@ -34,11 +36,20 @@ const SearchPage: React.FC = () => {
     }
 
     try {
+      // Updated to include song_id, artist_id, and album_id in the search
       const response = await fetch(`http://localhost:3001/search?keyword=${searchKeyword}&type=${searchType}`);
       const data = await response.json();
       setResults({
-        music: data.music.map((item: MusicItem, index: number) => ({ ...item, id: `song-${index}` })),
-        artists: data.artists.map((item: MusicItem, index: number) => ({ ...item, id: `artist-${index}` }))
+        music: data.music.map((item: MusicItem) => ({
+          ...item,
+          song_id: item.song_id || `song-${Math.random()}`,
+          artist_id: item.artist_id,
+          album_id: item.album_id
+        })),
+        artists: data.artists.map((item: MusicItem) => ({
+          ...item,
+          artist_id: item.artist_id || `artist-${Math.random()}`
+        }))
       });
     } catch (error) {
       console.error('Error fetching search results:', error);
@@ -57,12 +68,15 @@ const SearchPage: React.FC = () => {
   };
 
   const handleSongClick = (songId: string) => {
-    console.log(`Navigating to song with id: ${songId}`);
-    // navigate(`/song/${songId}`);
+    navigate(`/song/${songId}`);
   };
 
   const handleCreatePlaylist = () => {
-    console.log("Create new playlist");
+    navigate('/newplaylist');
+  };
+
+  const handleLogout = () => {
+    navigate('/#');
   };
 
   return (
@@ -97,14 +111,17 @@ const SearchPage: React.FC = () => {
                 <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
                 <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
                 <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
-                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
+                <li><Link to="/newplaylist" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</Link></li>
               </ul>
             </nav>
             <div className="mt-auto">
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button 
+                onClick={handleLogout}
+                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4"
+              >
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>
@@ -144,9 +161,9 @@ const SearchPage: React.FC = () => {
           <div className="grid grid-cols-3 gap-4">
             {recentSearches.map((item) => (
               <div 
-                key={item.id} 
+                key={item.song_id} 
                 className="bg-[#2A2A2A] p-4 rounded-lg cursor-pointer hover:bg-[#3A3A3A] transition-colors"
-                onClick={() => handleSongClick(item.id!)}
+                onClick={() => handleSongClick(item.song_id!)}
               >
                 <p className="font-semibold">{item.title}</p>
                 <p className="text-sm text-gray-400">{item.artist}</p>
@@ -164,9 +181,9 @@ const SearchPage: React.FC = () => {
                 <div className="grid grid-cols-1 gap-2">
                   {results.music.map((item) => (
                     <div 
-                      key={item.id} 
+                      key={item.song_id} 
                       className="bg-[#2A2A2A] p-3 rounded-lg flex items-center cursor-pointer hover:bg-[#3A3A3A] transition-colors"
-                      onClick={() => handleSongClick(item.id!)}
+                      onClick={() => handleSongClick(item.song_id!)}
                     >
                       <Play className="w-4 h-4 mr-3 text-gray-400" />
                       <div>
@@ -184,7 +201,7 @@ const SearchPage: React.FC = () => {
                 <h3 className="text-xl font-semibold mb-3">Artists</h3>
                 <div className="grid grid-cols-1 gap-2">
                   {results.artists.map((item) => (
-                    <div key={item.id} className="bg-[#2A2A2A] p-3 rounded-lg">
+                    <div key={item.artist_id} className="bg-[#2A2A2A] p-3 rounded-lg">
                       <p className="font-semibold">{item.artist}</p>
                     </div>
                   ))}

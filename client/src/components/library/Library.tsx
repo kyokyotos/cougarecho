@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Play, X, Music, LogOut } from 'lucide-react';
 
 const LibraryPage: React.FC = () => {
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [accountType, setAccountType] = useState('listener');
+  const navigate = useNavigate();
+  
   const [playlists, setPlaylists] = useState([
     { id: 1, title: "My Playlist 1", imageUrl: "/api/placeholder/160/160" },
     { id: 2, title: "My Playlist 2", imageUrl: "/api/placeholder/160/160" },
@@ -27,7 +29,12 @@ const LibraryPage: React.FC = () => {
   };
 
   const handleCreatePlaylist = () => {
-    console.log("Create new playlist");
+    navigate('/newplaylist');
+  };
+
+  const handleLogout = () => {
+    // Add any logout logic here (e.g., clearing tokens, etc.)
+    navigate('/#');
   };
 
   return (
@@ -69,7 +76,10 @@ const LibraryPage: React.FC = () => {
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button 
+                onClick={handleLogout}
+                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4"
+              >
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>

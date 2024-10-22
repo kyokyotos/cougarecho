@@ -18,14 +18,14 @@ const mockApi = {
 };
 
 const Artist = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [artistProfile, setArtistProfile] = useState({ name: '', albums: 0, songs: 0 });
   const [latestAlbum, setLatestAlbum] = useState({ name: '', streams: 0, likesSaves: 0, revenue: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState('');
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -55,7 +55,25 @@ const Artist = () => {
     }
   }, [location]);
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogout = () => {
+    // Clear any auth tokens or user data
+    localStorage.removeItem('userToken');
+    sessionStorage.clear();
+    
+    // Navigate to login with logout message
+    navigate('/#', { 
+      state: { 
+        showLogoutMessage: true,
+        message: "You've been logged out successfully" 
+      } 
+    });
+  };
+
+  const handleCreatePlaylist = () => {
+    navigate('/newplaylist');
+  };
+
+  const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchValue(value);
     if (value.length > 0) {
@@ -63,10 +81,6 @@ const Artist = () => {
     } else {
       navigate('/artist', { replace: true });
     }
-  };
-
-  const handleCreatePlaylist = () => {
-    console.log("Create new playlist");
   };
 
   if (isLoading) {
@@ -124,7 +138,10 @@ const Artist = () => {
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button 
+                onClick={handleLogout}
+                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
+              >
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>

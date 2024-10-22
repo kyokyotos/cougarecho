@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Play, Edit2, Loader, X, Music, LogOut } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 // Mock API
 const mockApi = {
@@ -53,6 +54,8 @@ const Modal = ({ isOpen, onClose, onConfirm, songName }) => {
 };
 
 const Admin = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
   const [adminProfile, setAdminProfile] = useState({ name: '', playlists: 0 });
   const [issues, setIssues] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -61,8 +64,6 @@ const Admin = () => {
   const [songToRemove, setSongToRemove] = useState(null);
   const [searchValue, setSearchValue] = useState('');
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const navigate = useNavigate();
-  const location = useLocation();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -92,6 +93,24 @@ const Admin = () => {
     }
   }, [location]);
 
+  const handleLogout = () => {
+    // Clear any auth tokens or user data
+    localStorage.removeItem('userToken');
+    sessionStorage.clear();
+    
+    // Navigate to login with logout message
+    navigate('/#', { 
+      state: { 
+        showLogoutMessage: true,
+        message: "You've been logged out successfully" 
+      } 
+    });
+  };
+
+  const handleCreatePlaylist = () => {
+    navigate('/newplaylist');
+  };
+
   const handleRemoveSong = async (songId, songName) => {
     setSongToRemove({ id: songId, name: songName });
     setModalOpen(true);
@@ -111,7 +130,7 @@ const Admin = () => {
     }
   };
 
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchValue(value);
     if (value.length > 0) {
@@ -119,10 +138,6 @@ const Admin = () => {
     } else {
       navigate('/admin', { replace: true });
     }
-  };
-
-  const handleCreatePlaylist = () => {
-    console.log("Create new playlist");
   };
 
   if (isLoading) {
@@ -180,7 +195,10 @@ const Admin = () => {
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button 
+                onClick={handleLogout}
+                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
+              >
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>

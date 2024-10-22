@@ -1,13 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Play, Home, Settings, Menu, User, Search, X, PlusCircle, Pause, Music, LogOut } from 'lucide-react';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const AlbumPage = () => {
+  const navigate = useNavigate();
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [imageError, setImageError] = useState(false);
   const [album, setAlbum] = useState({
     title: "Hit me hard and soft",
     artist: "Billie Eilish",
     songCount: 10,
+    coverUrl: "/api/placeholder/400/400",
     songs: [
       { id: 1, title: "Skinny", plays: 590383201, duration: "3:42" },
       { id: 2, title: "Lunch", plays: 590383201, duration: "3:15" },
@@ -16,7 +20,7 @@ const AlbumPage = () => {
     ]
   });
   const [currentlyPlayingSongId, setCurrentlyPlayingSongId] = useState(null);
-  const [accountType, setAccountType] = useState('listener'); // Can be 'listener', 'admin', or 'artist'
+  const [accountType, setAccountType] = useState('listener');
 
   useEffect(() => {
     document.title = `${album.title} - ${album.artist}`;
@@ -24,11 +28,24 @@ const AlbumPage = () => {
   }, [album.title, album.artist]);
 
   const fetchAccountType = () => {
-    // This is a mock API call. In a real application, you'd fetch this from your backend
     setTimeout(() => {
       const types = ['listener', 'admin', 'artist'];
       setAccountType(types[Math.floor(Math.random() * types.length)]);
     }, 1000);
+  };
+
+  const handleLogout = () => {
+    // Clear any auth tokens or user data here
+    localStorage.removeItem('userToken'); // Example cleanup
+    sessionStorage.clear(); // Clear session data
+    
+    // Navigate to home with state
+    navigate('/#', { 
+      state: { 
+        showLogoutMessage: true,
+        message: "You've been logged out successfully" 
+      } 
+    });
   };
 
   const handleSongClick = (songId) => {
@@ -40,7 +57,11 @@ const AlbumPage = () => {
   };
 
   const handleCreatePlaylist = () => {
-    console.log("Create new playlist");
+    navigate('/newplaylist');
+  };
+
+  const handleImageError = () => {
+    setImageError(true);
   };
 
   return (
@@ -82,7 +103,10 @@ const AlbumPage = () => {
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile ({accountType})
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button 
+                onClick={handleLogout}
+                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
+              >
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>
@@ -118,7 +142,20 @@ const AlbumPage = () => {
         <div className="flex-1 p-8">
           <div className="bg-[#1A1A1A] rounded-lg p-6">
             <div className="flex items-center space-x-6 mb-6">
-              <div className="w-40 h-40 bg-gray-700 rounded-md"></div>
+              <div className="w-40 h-40 rounded-md overflow-hidden shadow-lg">
+                {!imageError ? (
+                  <img
+                    src={album.coverUrl}
+                    alt={`${album.title} by ${album.artist}`}
+                    className="w-full h-full object-cover"
+                    onError={handleImageError}
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-700 flex items-center justify-center">
+                    <Music className="w-12 h-12 text-gray-500" />
+                  </div>
+                )}
+              </div>
               <div className="flex-1">
                 <h1 className="text-4xl font-bold">{album.title}</h1>
                 <p className="text-xl text-pink-400">{album.artist}</p>

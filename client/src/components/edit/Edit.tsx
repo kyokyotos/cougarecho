@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Search, Settings, Menu, User, Edit2, PlusCircle, Home, X, Music, LogOut } from 'lucide-react';
 
 const UserProfileSettings = () => {
+  const navigate = useNavigate();
   const [name, setName] = useState('Anailemone');
   const [isEditingName, setIsEditingName] = useState(false);
   const [oldEmail, setOldEmail] = useState('');
@@ -27,6 +28,24 @@ const UserProfileSettings = () => {
       const types = ['listener', 'admin', 'artist'];
       setAccountType(types[Math.floor(Math.random() * types.length)]);
     }, 1000);
+  };
+
+  const handleLogout = () => {
+    // Clear any auth tokens or user data
+    localStorage.removeItem('userToken');
+    sessionStorage.clear();
+    
+    // Navigate to login with logout message
+    navigate('/#', { 
+      state: { 
+        showLogoutMessage: true,
+        message: "You've been logged out successfully" 
+      } 
+    });
+  };
+
+  const handleCreatePlaylist = () => {
+    navigate('/newplaylist');
   };
 
   const getProfilePath = () => {
@@ -70,10 +89,6 @@ const UserProfileSettings = () => {
     setShowDeleteConfirmation(false);
   };
 
-  const handleCreatePlaylist = () => {
-    console.log("Create new playlist");
-  };
-
   return (
     <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans">
       {/* Sidebar */}
@@ -113,7 +128,10 @@ const UserProfileSettings = () => {
               <Link to={getProfilePath()} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile ({accountType})
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button 
+                onClick={handleLogout}
+                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
+              >
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>
@@ -243,7 +261,7 @@ const UserProfileSettings = () => {
               Delete My Account
             </button>
             {showDeleteConfirmation && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                 <div className="bg-[#282828] p-6 rounded-lg">
                   <h3 className="text-xl font-bold mb-4">Are you absolutely sure?</h3>
                   <p className="mb-4">This action cannot be undone. This will permanently delete your account and remove your data from our servers.</p>

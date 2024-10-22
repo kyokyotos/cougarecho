@@ -13,6 +13,7 @@ import Library from "./components/library/Library";
 import Newalbum from './components/albumpage/Newalbum';
 import Playlist from './components/playlist/Playlist';
 import Newplaylist from './components/playlist/Newplaylist';
+import ArtistProfile from './components/artistpage/Artistprofile';
 
 
 const AppRoutes = [
@@ -83,7 +84,13 @@ const AppRoutes = [
   {
     path: '/newplaylist',
     element: <Newplaylist />
+  },
+
+  {
+    path: '/artistprofile',
+    element: <ArtistProfile />
   }
+  
   
   
   

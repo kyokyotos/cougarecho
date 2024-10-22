@@ -65,7 +65,11 @@ const Listener = () => {
   };
 
   const handleCreatePlaylist = () => {
-    console.log("Create new playlist");
+    navigate('/newplaylist');
+  };
+
+  const handleLogout = () => {
+    navigate('/#', { state: { message: "You've been logged out" } });
   };
 
   if (isLoading) {
@@ -95,9 +99,9 @@ const Listener = () => {
         </div>
         <div className="flex-grow"></div>
         <div className="mt-auto flex flex-col items-center space-y-4 mb-4">
-          <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
+          <Link to="/newplaylist" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
             <PlusCircle className="w-6 h-6" />
-          </button>
+          </Link>
           <Link to="/useredit" aria-label="User Profile" className="text-[#1ED760] hover:text-white">
             <User className="w-6 h-6" />
           </Link>
@@ -116,14 +120,14 @@ const Listener = () => {
                 <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
                 <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
                 <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
-                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
+                <li><Link to="/newplaylist" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</Link></li>
               </ul>
             </nav>
             <div className="mt-auto">
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button onClick={handleLogout} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>

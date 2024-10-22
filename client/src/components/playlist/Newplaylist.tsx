@@ -2,14 +2,24 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Play, Edit2, X, Music, LogOut, Image as ImageIcon } from 'lucide-react';
 
-// Mock API for database operations
+// Mock API with focused song database
 const mockApi = {
-  searchSongs: (query) => Promise.resolve([
-    { id: 1, title: 'Song 1', artist: 'Artist 1', duration: 180 },
-    { id: 2, title: 'Song 2', artist: 'Artist 2', duration: 210 },
-    { id: 3, title: 'New Song', artist: 'New Artist', duration: 260 },
-    { id: 4, title: 'Another Track', artist: 'Cool Band', duration: 175 },
-  ]),
+  searchSongs: (query) => {
+    const allSongs = [
+      { id: 1, title: 'Song 1', artist: 'Artist 1', duration: 180 },
+      { id: 2, title: 'Song 2', artist: 'Artist 2', duration: 210 },
+      { id: 3, title: 'New Song', artist: 'New Artist', duration: 260 },
+      { id: 4, title: 'Another Track', artist: 'Cool Band', duration: 175 },
+      { id: 5, title: 'Great Song', artist: 'Artist 3', duration: 195 }
+    ];
+
+    const filteredSongs = allSongs.filter(song => 
+      song.title.toLowerCase().includes(query.toLowerCase()) ||
+      song.artist.toLowerCase().includes(query.toLowerCase())
+    );
+
+    return Promise.resolve(filteredSongs);
+  },
   createPlaylist: (playlistData) => Promise.resolve({ id: 1, ...playlistData }),
 };
 
@@ -26,7 +36,6 @@ const CreatePlaylistPage = () => {
 
   useEffect(() => {
     const checkAuth = async () => {
-      // Simulating authentication check
       const loggedInUser = { username: 'currentUser' };
       if (loggedInUser) {
         setUser(loggedInUser);
@@ -37,6 +46,25 @@ const CreatePlaylistPage = () => {
 
     checkAuth();
   }, [navigate]);
+
+  const handleSearchSongs = async (query) => {
+    setSearchQuery(query);
+    if (query.length > 1) {
+      try {
+        const results = await mockApi.searchSongs(query);
+        // Filter out songs that are already in the playlist
+        const filteredResults = results.filter(
+          result => !selectedSongs.some(selected => selected.id === result.id)
+        );
+        setSearchResults(filteredResults);
+      } catch (err) {
+        console.error('Error searching songs:', err);
+        setSearchResults([]);
+      }
+    } else {
+      setSearchResults([]);
+    }
+  };
 
   const handleImageUpload = (event) => {
     const file = event.target.files[0];
@@ -49,28 +77,29 @@ const CreatePlaylistPage = () => {
     }
   };
 
-  const handleSearchSongs = async (query) => {
-    setSearchQuery(query);
-    if (query.length > 2) {
-      const results = await mockApi.searchSongs(query);
-      setSearchResults(results);
-    } else {
-      setSearchResults([]);
-    }
+  const handleLogout = () => {
+    navigate('/#', { state: { message: "You've been logged out" } });
   };
 
   const addSongToPlaylist = (song) => {
-    setSelectedSongs([...selectedSongs, { ...song, dateAdded: new Date().toISOString() }]);
-    setSearchResults(searchResults.filter(s => s.id !== song.id));
+    setSelectedSongs(prev => [...prev, { ...song, dateAdded: new Date().toISOString() }]);
+    setSearchResults(prev => prev.filter(s => s.id !== song.id));
   };
 
   const removeSongFromPlaylist = (song) => {
-    setSelectedSongs(selectedSongs.filter(s => s.id !== song.id));
+    setSelectedSongs(prev => prev.filter(s => s.id !== song.id));
+    if (searchQuery) {
+      handleSearchSongs(searchQuery);
+    }
   };
 
   const handleCreatePlaylist = async () => {
     if (!playlistTitle.trim()) {
       setError('Please enter a playlist title');
+      return;
+    }
+    if (selectedSongs.length === 0) {
+      setError('Please add at least one song to the playlist');
       return;
     }
     setError('');
@@ -82,8 +111,12 @@ const CreatePlaylistPage = () => {
       songCount: selectedSongs.length,
       dateCreated: new Date().toISOString(),
     };
-    await mockApi.createPlaylist(playlistData);
-    navigate('/userlibrary');
+    try {
+      await mockApi.createPlaylist(playlistData);
+      navigate('/userlibrary');
+    } catch (err) {
+      setError('Failed to create playlist. Please try again.');
+    }
   };
 
   const formatDuration = (seconds) => {
@@ -98,13 +131,9 @@ const CreatePlaylistPage = () => {
     const diffTime = Math.abs(now - date);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-    if (diffDays === 1) {
-      return 'Yesterday';
-    } else if (diffDays <= 7) {
-      return `${diffDays} days ago`;
-    } else {
-      return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    }
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays <= 7) return `${diffDays} days ago`;
+    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
   };
 
   return (
@@ -118,9 +147,9 @@ const CreatePlaylistPage = () => {
         </div>
         <div className="flex-grow"></div>
         <div className="mt-auto flex flex-col items-center space-y-4 mb-4">
-          <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
+          <Link to="/newplaylist" className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
             <PlusCircle className="w-6 h-6" />
-          </button>
+          </Link>
           <Link to="/useredit" aria-label="User Profile" className="text-[#1ED760] hover:text-white">
             <User className="w-6 h-6" />
           </Link>
@@ -139,14 +168,14 @@ const CreatePlaylistPage = () => {
                 <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
                 <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
                 <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
-                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
+                <li><Link to="/newplaylist" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</Link></li>
               </ul>
             </nav>
             <div className="mt-auto">
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button onClick={handleLogout} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>
@@ -156,19 +185,9 @@ const CreatePlaylistPage = () => {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col p-8">
-        {/* Top bar */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex-1 max-w-2xl">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search for Song or Artist"
-                className="w-full bg-[#2A2A2A] rounded-full py-2 pl-10 pr-4 text-sm text-[#EBE7CD] focus:outline-none focus:ring-2 focus:ring-white"
-                value={searchQuery}
-                onChange={(e) => handleSearchSongs(e.target.value)}
-              />
-            </div>
+            <h1 className="text-2xl font-bold">Create New Playlist</h1>
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/homepage" className="text-[#1ED760] hover:text-white">
@@ -201,7 +220,7 @@ const CreatePlaylistPage = () => {
             <div>
               <input
                 type="text"
-                placeholder="Title"
+                placeholder="Playlist Title"
                 value={playlistTitle}
                 onChange={(e) => setPlaylistTitle(e.target.value)}
                 className="text-4xl font-bold bg-transparent border-b border-[#EBE7CD] text-[#EBE7CD] w-full focus:outline-none focus:border-[#1ED760]"
@@ -212,27 +231,9 @@ const CreatePlaylistPage = () => {
             </div>
           </div>
 
-          <div className="mb-4">
-            <div className="grid grid-cols-4 text-sm font-bold text-[#EBE7CD] opacity-75 mb-2">
-              <span></span>
-              <span>Title</span>
-              <span>Date Added</span>
-              <span>Time</span>
-            </div>
-            {selectedSongs.map((song) => (
-              <div key={song.id} className="grid grid-cols-4 text-sm py-2 hover:bg-[#2A2A2A] rounded items-center">
-                <button className="text-[#1ED760] hover:text-white">
-                  <Play className="w-5 h-5" />
-                </button>
-                <span>{song.title} - {song.artist}</span>
-                <span>{formatDateAdded(song.dateAdded)}</span>
-                <span>{formatDuration(song.duration)}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className="mt-4">
-            <h3 className="text-lg font-bold mb-2">Add Songs</h3>
+          {/* Search and add songs */}
+          <div className="mb-8">
+            <h3 className="text-lg font-bold mb-4">Search Songs</h3>
             <div className="relative mb-4">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
@@ -243,15 +244,46 @@ const CreatePlaylistPage = () => {
                 className="w-full bg-[#2A2A2A] rounded-full py-2 pl-10 pr-4 text-sm text-[#EBE7CD] focus:outline-none focus:ring-2 focus:ring-[#1ED760]"
               />
             </div>
-            {searchResults.map((song) => (
-              <div key={song.id} className="flex justify-between items-center py-2 hover:bg-[#2A2A2A] rounded">
-                <span>{song.title} - {song.artist}</span>
-                <button
-                  onClick={() => addSongToPlaylist(song)}
-                  className="bg-[#1ED760] text-black px-3 py-1 rounded-full text-sm"
+            {searchResults.length > 0 && (
+              <div className="bg-[#2A2A2A] rounded-lg p-4 max-h-60 overflow-y-auto">
+                {searchResults.map((song) => (
+                  <div key={song.id} className="flex justify-between items-center py-2 hover:bg-[#383838] rounded px-2">
+                    <div>
+                      <div className="text-sm font-semibold">{song.title}</div>
+                      <div className="text-xs text-gray-400">{song.artist}</div>
+                    </div>
+                    <button
+                      onClick={() => addSongToPlaylist(song)}
+                      className="bg-[#1ED760] text-black px-3 py-1 rounded-full text-sm"
+                    >
+                      Add
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Selected songs list */}
+          <div className="mb-4">
+            <h3 className="text-lg font-bold mb-4">Playlist Songs</h3>
+            <div className="grid grid-cols-4 text-sm font-bold text-[#EBE7CD] opacity-75 mb-2">
+              <span></span>
+              <span>Title</span>
+              <span>Date Added</span>
+              <span>Duration</span>
+            </div>
+            {selectedSongs.map((song) => (
+              <div key={song.id} className="grid grid-cols-4 text-sm py-2 hover:bg-[#2A2A2A] rounded items-center">
+                <button 
+                  onClick={() => removeSongFromPlaylist(song)}
+                  className="text-red-500 hover:text-red-400"
                 >
-                  Add
+                  <X className="w-5 h-5" />
                 </button>
+                <span>{song.title} - {song.artist}</span>
+                <span>{formatDateAdded(song.dateAdded)}</span>
+                <span>{formatDuration(song.duration)}</span>
               </div>
             ))}
           </div>

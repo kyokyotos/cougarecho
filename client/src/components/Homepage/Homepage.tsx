@@ -7,6 +7,17 @@ const Homepage: React.FC = () => {
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [accountType, setAccountType] = useState('listener'); // Can be 'listener', 'admin', or 'artist'
 
+  const getProfilePath = () => {
+    switch (accountType) {
+      case 'artist':
+        return '/artistprofile';
+      case 'admin':
+        return '/adminprofile';
+      default:
+        return '/userprofile';
+    }
+  };
+
   useEffect(() => {
     document.title = 'Homepage';
     fetchAccountType();
@@ -20,6 +31,24 @@ const Homepage: React.FC = () => {
     }, 1000);
   };
 
+  const handleLogout = () => {
+    // Clear any auth tokens or user data
+    localStorage.removeItem('userToken');
+    sessionStorage.clear();
+    
+    // Navigate to login with logout message
+    navigate('/#', { 
+      state: { 
+        showLogoutMessage: true,
+        message: "You've been logged out successfully" 
+      } 
+    });
+  };
+
+  const handleCreatePlaylist = () => {
+    navigate('/newplaylist');
+  };
+
   const handleSearchClick = () => {
     navigate('/search');
   };
@@ -30,10 +59,6 @@ const Homepage: React.FC = () => {
 
   const handleAlbumClick = (albumId: number) => {
     navigate(`/album/${albumId}`);
-  };
-
-  const handleCreatePlaylist = () => {
-    console.log("Create new playlist");
   };
 
   // Placeholder data (replace with real data in production)
@@ -64,9 +89,7 @@ const Homepage: React.FC = () => {
           <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
             <PlusCircle className="w-6 h-6" />
           </button>
-          <Link to="/useredit" aria-label="User Profile" className="text-[#1ED760] hover:text-white">
-            <User className="w-6 h-6" />
-          </Link>
+          <Link to={getProfilePath()} aria-label="User Profile" className="text-[#1ED760] hover:text-white"><User className="w-6 h-6" /></Link>
         </div>
       </div>
 
@@ -81,15 +104,18 @@ const Homepage: React.FC = () => {
               <ul className="space-y-4">
                 <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
                 <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
-                <li><Link to="/library" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
-                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
+                <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
+                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center w-full"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
               </ul>
             </nav>
             <div className="mt-auto">
-              <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <Link to={getProfilePath()} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile ({accountType})
               </Link>
-              <button className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+              <button 
+                onClick={handleLogout}
+                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
+              >
                 <LogOut className="w-5 h-5 mr-3" /> Log out
               </button>
             </div>
@@ -117,9 +143,7 @@ const Homepage: React.FC = () => {
             <Link to="/homepage" className="text-[#1ED760] hover:text-white">
               <Home className="w-6 h-6" />
             </Link>
-            <Link to="/useredit" className="text-[#1ED760] hover:text-white">
-              <Settings className="w-6 h-6" />
-            </Link>
+            <Link to={getProfilePath()} className="text-[#1ED760] hover:text-white"><Settings className="w-6 h-6" /></Link>
           </div>
         </div>
 
