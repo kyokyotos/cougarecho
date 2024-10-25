@@ -8,6 +8,8 @@ interface MusicItem {
   album_id?: string;
   song_name: string;
   artist_name: string;
+  album_name: string; // Add album field to the MusicItem interface
+  genre_name?: string; // Add genre field to the MusicItem interface
   duration: string; // Add duration field to the MusicItem interface
 }
 
@@ -33,10 +35,10 @@ const SearchPage: React.FC = () => {
 
     try {
       // Fetch search results from your backend API
-      const response = await fetch(`http://localhost:5001/api/songs?keyword=${searchKeyword}`);
+      const response = await fetch(`http://localhost:5001/api/songs/search?keyword=${searchKeyword}`);
       const data = await response.json();
 
-      // Assuming the API returns an array of songs with name and duration
+      // Assuming the API returns an array of songs with name, artist, album, and duration
       setResults({
         music: data, // Replace with data from your backend
         artists: []  // If your API doesn't return artists, you can leave this empty
@@ -154,19 +156,19 @@ const SearchPage: React.FC = () => {
                 <div className="grid grid-cols-1 gap-2">
                   {results.music.map((item) => (
                     <div 
-                    key={item.song_id} 
-                    className="bg-[#2A2A2A] p-3 rounded-lg flex items-center cursor-pointer hover:bg-[#3A3A3A] transition-colors"
-                    onClick={() => handleSongClick(item.song_id)}
-                  >
-                    <Play className="w-4 h-4 mr-3 text-gray-400" />
-                    <div className="flex-grow">
-                      <p className="font-semibold">{item.song_name}</p>
-                      <p className="text-sm text-gray-400">Artist: {item.artist_name}</p> {/* Display Artist Name */}
-                      <p className="text-sm text-gray-400">Album: {item.album_name}</p> {/* Display Album Name */}
-                      <p className="text-sm text-gray-400">Genre: {item.genre_name || 'Unknown'}</p> {/* Display Genre Name */}
+                      key={item.song_id} 
+                      className="bg-[#2A2A2A] p-3 rounded-lg flex items-center cursor-pointer hover:bg-[#3A3A3A] transition-colors"
+                      onClick={() => handleSongClick(item.song_id)}
+                    >
+                      <Play className="w-4 h-4 mr-3 text-gray-400" />
+                      <div className="flex-grow">
+                        <p className="font-semibold">{item.song_name}</p>
+                        <p className="text-sm text-gray-400">Artist: {item.artist_name}</p> {/* Display Artist Name */}
+                        <p className="text-sm text-gray-400">Album: {item.album_name}</p> {/* Display Album Name */}
+                        <p className="text-sm text-gray-400">Genre: {item.genre_name || 'Unknown'}</p> {/* Display Genre Name */}
+                      </div>
+                      <p className="text-sm text-gray-400">{item.duration}</p> {/* Display Song Duration */}
                     </div>
-                    <p className="text-sm text-gray-400">{item.duration}</p> {/* Display Song Duration */}
-                  </div>
                   ))}
                 </div>
               </div>

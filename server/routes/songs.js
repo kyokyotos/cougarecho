@@ -27,13 +27,15 @@ router.get('/search', async (req, res) => {
         JOIN [dbo].[User] u ON ar.user_id = u.user_id -- Join Artist with User to get the artist's name
         JOIN [dbo].[Album] a ON s.album_id = a.album_id
         LEFT JOIN [dbo].[Genre] g ON s.genre_id = g.genre_id
-        WHERE s.song_name LIKE @keyword -- Search for songs by song name
-        OR u.display_name LIKE @keyword OR u.first_name + ' ' + u.last_name LIKE @keyword -- Search for songs by artist name
-      `);
-
-    res.status(200).json(result.recordset); // Return the matching songs
+        WHERE s.song_name LIKE @keyword -- Search by song name
+        OR u.display_name LIKE @keyword -- Search by artist's display name
+        OR u.first_name + ' ' + u.last_name LIKE @keyword -- Search by artist's full name (first + last)
+      `); // Search for songs with the keyword, joining related tables to get artist, album, and genre names
+  
+      // Return the matching songs
+      res.status(200).json(result.recordset);
   } catch (error) {
-    console.error('Error fetching songs:', error);
+    console.error('Error fetching songs or artists:', error);
     res.status(500).json({ error: 'Internal server error' });
   }
 });
