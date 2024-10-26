@@ -113,7 +113,7 @@ const LoginPage = () => {
       </div>
       <div className="w-1/2 bg-[#165C3A] flex justify-center items-center relative">
         <img
-          src="/src/assets/undraw_happy_music_g6wc 3 (1).png"
+          src="../assets/undraw_happy_music_g6wc 3 (1).png"
           alt="Happy Music"
           className="max-w-full max-h-full object-contain"
           onError={(e) => {
