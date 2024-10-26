@@ -55,7 +55,7 @@ const Home = () => {
         </div>
         <div className="w-1/2 relative flex justify-end items-end">
           <img
-            src="/src/assets/Frame (1).png"
+            src="../assets/Frame (1).png"
             alt="Decorative frame"
             className="max-w-full max-h-full object-contain"
             onError={(e) => {
