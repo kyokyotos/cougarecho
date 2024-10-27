@@ -1,6 +1,6 @@
 import Home from './components/Home';
-import Homepage from './components/Homepage/homepage';
-import Login from './components/login/Login'; 
+import Homepage from './components/Homepage/Homepage';
+import Login from './components/login/Login';
 import Register from "./components/register/Register";
 import Confirm from './components/confirm/Confirm';// Updated import path
 import Admin from "./components/admin/Admin";
@@ -50,7 +50,7 @@ const AppRoutes = [
     path: '/search',
     element: <Search />
   },
-  
+
   {
     path: '/listener',
     element: <Listener />
@@ -90,12 +90,12 @@ const AppRoutes = [
     path: '/artistprofile',
     element: <ArtistProfile />
   }
-  
-  
-  
-  
-  
- 
+
+
+
+
+
+
 ];
 
 export default AppRoutes;

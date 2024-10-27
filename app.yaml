@@ -1,0 +1,10 @@
+runtime: nodejs20
+env: standard
+
+handlers:
+  - url: /client
+    static_dir: client/dist
+
+  - url: /.*
+    static_files: dist/index.html
+    upload: dist/index.html
