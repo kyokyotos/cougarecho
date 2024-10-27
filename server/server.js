@@ -11,7 +11,7 @@ import corsOptions from './config/corsOptions.js';
 dotenv.config(); // Load environment variables
 
 const app = express();
-const port = 5001; // The port for the server
+const port = process.env.APP_PORT || 5001; // The port for the server
 
 app.use(cors(corsOptions)); // Enable CORS
 app.use(express.json()); // Middleware to parse incoming JSON requests

@@ -1,0 +1,9 @@
+{
+    "name": "cougarecho",
+    "version": "1.0.0",
+    "main": "server/server.js",
+    "type": "module",
+    "scripts": {
+        "start": "npm install --prefix ./server && npm start --prefix ./server"
+    }
+}
