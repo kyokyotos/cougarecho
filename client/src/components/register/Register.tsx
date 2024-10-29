@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, X, Loader } from 'lucide-react';
 
+// Use the configured API URL
+const API_URL = import.meta.env.VITE_API_URL || 'https://cougarecho-4.uc.r.appspot.com';
+
 const Register = () => {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -22,7 +25,7 @@ const Register = () => {
     number: false
   });
 
-  // Debounce function to prevent too many API calls
+  // Debounce function
   const debounce = (func: Function, wait: number) => {
     let timeout: NodeJS.Timeout;
     return (...args: any[]) => {
@@ -43,9 +46,16 @@ const Register = () => {
     setUsernameError('');
 
     try {
-      // Replace with your actual API endpoint
-      const response = await fetch(`http://your-api/check-username?username=${username}`);
+      console.log('Checking username availability for:', username);
+      const response = await fetch(`${API_URL}/api/auth/check-username?username=${username}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
       const data = await response.json();
+      console.log('Username check response:', data);
 
       if (response.ok) {
         setIsUsernameAvailable(data.isAvailable);
@@ -57,6 +67,7 @@ const Register = () => {
         setIsUsernameAvailable(false);
       }
     } catch (error) {
+      console.error('Username check error:', error);
       setUsernameError('Error checking username availability');
       setIsUsernameAvailable(false);
     } finally {
@@ -71,6 +82,7 @@ const Register = () => {
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUsername = e.target.value;
     setUsername(newUsername);
+    console.log('Username changed to:', newUsername);
 
     if (newUsername.trim()) {
       setIsCheckingUsername(true);
@@ -82,6 +94,7 @@ const Register = () => {
   };
 
   const validatePassword = (password: string) => {
+    console.log('Validating password...');
     const minLength = 8;
     const hasCapital = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
@@ -110,26 +123,37 @@ const Register = () => {
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    // Log form data
+    console.log('Registration attempt with fields:', {
+      username,
+      confirmPassword,
+      userType,
+      password: '********' // Don't log actual password
+    });
+
     // Check username availability one final time
     if (!isUsernameAvailable) {
+      console.log('Username not available:', username);
       setError('Please choose a different username');
       return;
     }
 
     const passwordError = validatePassword(password);
     if (passwordError) {
+      console.log('Password validation failed:', passwordError);
       setError(passwordError);
       return;
     }
 
     if (password !== confirmPassword) {
+      console.log('Passwords do not match');
       setError("Passwords don't match");
       return;
     }
 
     try {
-      // Replace with your actual registration API endpoint
-      const response = await fetch('http://your-api/register', {
+      console.log('Sending registration request to:', `${API_URL}/api/auth/register`);
+      const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -141,13 +165,18 @@ const Register = () => {
         }),
       });
 
+      console.log('Registration response status:', response.status);
+      
       if (response.ok) {
+        console.log('Registration successful');
         navigate('/confirm');
       } else {
         const data = await response.json();
+        console.log('Registration failed:', data.message);
         setError(data.message || 'Registration failed');
       }
     } catch (error) {
+      console.error('Registration error:', error);
       setError('Registration failed. Please try again.');
     }
   };
@@ -179,7 +208,6 @@ const Register = () => {
                   onChange={handleUsernameChange}
                   className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
                 />
-                {/* Username availability indicator */}
                 {username && (
                   <div className="absolute right-4 top-1/2 transform -translate-y-1/2">
                     {isCheckingUsername ? (
@@ -205,7 +233,6 @@ const Register = () => {
                 onChange={(e) => setPassword(e.target.value)}
                 className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
               />
-              {/* Password requirements display */}
               <div className="bg-[#0D4C2E] rounded-lg p-4 space-y-2 text-sm text-[#FAF5CE]">
                 <h3 className="font-semibold mb-2">Password Requirements:</h3>
                 <div className="flex items-center space-x-2">
@@ -266,11 +293,11 @@ const Register = () => {
             <Link to="/login" className="text-[#D17A22] hover:underline">Login</Link>
           </p>
         </div>
-        <div></div> {/* Spacer */}
+        <div></div>
       </div>
       <div className="w-1/2 bg-[#165C3A] flex justify-center items-center relative">
         <img
-          src="../assets/undraw_happy_music_g6wc 3 (1).png"
+          src="/assets/undraw_happy_music_g6wc 3 (1).png"
           alt="Happy Music"
           className="max-w-full max-h-full object-contain"
           onError={(e) => {

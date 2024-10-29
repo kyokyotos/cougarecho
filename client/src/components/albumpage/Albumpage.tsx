@@ -1,45 +1,133 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useParams } from 'react-router-dom';
 import { Play, Home, Settings, Menu, User, Search, X, PlusCircle, Pause, Music, LogOut } from 'lucide-react';
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import Player from '../songplayer/Player';
+
+interface Song {
+  song_id: string;
+  title: string;
+  artist: string;
+  duration: string;
+  plays: number;
+  path: string;
+  album_id: string;
+  artist_id: string;
+  created_at: string;
+  isAvailable: boolean;
+}
+
+interface Album {
+  album_id: string;
+  album_name: string;
+  artist_id: string;
+  artist_name: string;
+  path: string;
+  create_at: string;
+  update_at: string;
+  songs: Song[];
+}
 
 const AlbumPage = () => {
   const navigate = useNavigate();
+  const { albumId } = useParams();
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
   const [imageError, setImageError] = useState(false);
-  const [album, setAlbum] = useState({
-    title: "Hit me hard and soft",
-    artist: "Billie Eilish",
-    songCount: 10,
-    coverUrl: "/api/placeholder/400/400",
+  const [searchQuery, setSearchQuery] = useState('');
+  const [album, setAlbum] = useState<Album>({
+    album_id: albumId || 'mock-album-id',
+    album_name: "Hit me hard and soft",
+    artist_id: 'artist-1',
+    artist_name: "Billie Eilish",
+    path: "/api/placeholder/400/400",
+    create_at: new Date().toISOString(),
+    update_at: new Date().toISOString(),
     songs: [
-      { id: 1, title: "Skinny", plays: 590383201, duration: "3:42" },
-      { id: 2, title: "Lunch", plays: 590383201, duration: "3:15" },
-      { id: 3, title: "Wildflower", plays: 480293102, duration: "4:01" },
-      { id: 4, title: "The Greatest", plays: 520184930, duration: "3:57" },
+      { 
+        song_id: "1", 
+        title: "Skinny", 
+        artist: "Billie Eilish",
+        duration: "3:42",
+        plays: 590383201,
+        path: "/path/to/audio1.mp3",
+        album_id: "album-1",
+        artist_id: "artist-1",
+        created_at: new Date().toISOString(),
+        isAvailable: true
+      },
+      { 
+        song_id: "2", 
+        title: "Lunch", 
+        artist: "Billie Eilish",
+        duration: "3:15",
+        plays: 590383201,
+        path: "/path/to/audio2.mp3",
+        album_id: "album-1",
+        artist_id: "artist-1",
+        created_at: new Date().toISOString(),
+        isAvailable: true
+      },
+      { 
+        song_id: "3", 
+        title: "Wildflower", 
+        artist: "Billie Eilish",
+        duration: "4:01",
+        plays: 480293102,
+        path: "/path/to/audio3.mp3",
+        album_id: "album-1",
+        artist_id: "artist-1",
+        created_at: new Date().toISOString(),
+        isAvailable: true
+      },
+      { 
+        song_id: "4", 
+        title: "The Greatest", 
+        artist: "Billie Eilish",
+        duration: "3:57",
+        plays: 520184930,
+        path: "/path/to/audio4.mp3",
+        album_id: "album-1",
+        artist_id: "artist-1",
+        created_at: new Date().toISOString(),
+        isAvailable: true
+      }
     ]
   });
-  const [currentlyPlayingSongId, setCurrentlyPlayingSongId] = useState(null);
+  const [currentSong, setCurrentSong] = useState<null | {
+    id: string;
+    title: string;
+    artist: string;
+    coverUrl?: string;
+    audioUrl: string;
+  }>(null);
   const [accountType, setAccountType] = useState('listener');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [userId, setUserId] = useState<string>('mock-user-id');
 
   useEffect(() => {
-    document.title = `${album.title} - ${album.artist}`;
-    fetchAccountType();
-  }, [album.title, album.artist]);
+    console.log('Album state:', album);
+    document.title = `${album.album_name} - ${album.artist_name}`;
+  }, [album]);
 
-  const fetchAccountType = () => {
-    setTimeout(() => {
-      const types = ['listener', 'admin', 'artist'];
-      setAccountType(types[Math.floor(Math.random() * types.length)]);
-    }, 1000);
+  const handleSearch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setSearchQuery(value);
+    if (value.length > 0) {
+      navigate(`/search?q=${encodeURIComponent(value)}`, { replace: true });
+    }
   };
 
   const handleLogout = () => {
-    // Clear any auth tokens or user data here
-    localStorage.removeItem('userToken'); // Example cleanup
-    sessionStorage.clear(); // Clear session data
-    
-    // Navigate to home with state
+    localStorage.removeItem('userToken');
+    sessionStorage.clear();
     navigate('/#', { 
       state: { 
         showLogoutMessage: true,
@@ -48,11 +136,32 @@ const AlbumPage = () => {
     });
   };
 
-  const handleSongClick = (songId) => {
-    if (currentlyPlayingSongId === songId) {
-      setCurrentlyPlayingSongId(null);
+  const handleSongClick = (song: Song) => {
+    console.log('Song clicked:', song);
+    if (currentSong?.id === song.song_id) {
+      setCurrentSong(null);
     } else {
-      setCurrentlyPlayingSongId(songId);
+      setCurrentSong({
+        id: song.song_id,
+        title: song.title,
+        artist: album.artist_name,
+        coverUrl: album.path,
+        audioUrl: song.path
+      });
+    }
+  };
+
+  const handlePlayAll = () => {
+    // Start playing the first song in the album
+    if (album.songs.length > 0) {
+      const firstSong = album.songs[0];
+      setCurrentSong({
+        id: firstSong.song_id,
+        title: firstSong.title,
+        artist: album.artist_name,
+        coverUrl: album.path,
+        audioUrl: firstSong.path
+      });
     }
   };
 
@@ -63,6 +172,14 @@ const AlbumPage = () => {
   const handleImageError = () => {
     setImageError(true);
   };
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#121212]">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans">
@@ -119,14 +236,16 @@ const AlbumPage = () => {
         {/* Top bar */}
         <div className="bg-[#121212] p-4 flex justify-between items-center">
           <div className="flex-1 max-w-xl">
-            <div className="relative">
+            <form onSubmit={handleSearch} className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
               <input
                 type="text"
+                value={searchQuery}
+                onChange={handleSearchInputChange}
                 placeholder="Search for Song or Artist"
-                className="w-full bg-[#2A2A2A] rounded-full py-2 pl-10 pr-4 text-sm text-[#EBE7CD]"
+                className="w-full bg-[#2A2A2A] rounded-full py-2 pl-10 pr-4 text-sm text-[#EBE7CD] focus:outline-none focus:ring-2 focus:ring-[#1ED760]"
               />
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-            </div>
+            </form>
           </div>
           <div className="flex items-center space-x-4">
             <Link to="/homepage" className="text-[#1ED760] hover:text-white">
@@ -145,8 +264,8 @@ const AlbumPage = () => {
               <div className="w-40 h-40 rounded-md overflow-hidden shadow-lg">
                 {!imageError ? (
                   <img
-                    src={album.coverUrl}
-                    alt={`${album.title} by ${album.artist}`}
+                    src={album.path}
+                    alt={`${album.album_name} by ${album.artist_name}`}
                     className="w-full h-full object-cover"
                     onError={handleImageError}
                   />
@@ -157,12 +276,15 @@ const AlbumPage = () => {
                 )}
               </div>
               <div className="flex-1">
-                <h1 className="text-4xl font-bold">{album.title}</h1>
-                <p className="text-xl text-pink-400">{album.artist}</p>
-                <p className="text-sm text-gray-400">{album.songCount} songs</p>
+                <h1 className="text-4xl font-bold">{album.album_name}</h1>
+                <p className="text-xl text-pink-400">{album.artist_name}</p>
+                <p className="text-sm text-gray-400">{album.songs.length} songs</p>
               </div>
             </div>
-            <button className="bg-[#1ED760] rounded-full p-3 mb-6">
+            <button 
+              className="bg-[#1ED760] rounded-full p-3 mb-6"
+              onClick={handlePlayAll}
+            >
               <Play className="w-8 h-8 text-black" fill="black" />
             </button>
             <table className="w-full">
@@ -176,12 +298,12 @@ const AlbumPage = () => {
               <tbody>
                 {album.songs.map((song) => (
                   <tr 
-                    key={song.id} 
+                    key={song.song_id} 
                     className="border-b border-gray-700 hover:bg-gray-800 cursor-pointer"
-                    onClick={() => handleSongClick(song.id)}
+                    onClick={() => handleSongClick(song)}
                   >
                     <td className="py-3 flex items-center">
-                      {currentlyPlayingSongId === song.id ? (
+                      {currentSong?.id === song.song_id ? (
                         <Pause className="w-4 h-4 mr-3 text-[#1ED760]" />
                       ) : (
                         <Play className="w-4 h-4 mr-3 text-gray-400" />
@@ -196,6 +318,14 @@ const AlbumPage = () => {
             </table>
           </div>
         </div>
+
+        {/* Player */}
+        {currentSong && userId && (
+          <Player 
+            currentSong={currentSong}
+            userId={userId}
+          />
+        )}
       </div>
     </div>
   );

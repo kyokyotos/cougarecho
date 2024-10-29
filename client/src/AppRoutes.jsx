@@ -14,6 +14,7 @@ import Newalbum from './components/albumpage/Newalbum';
 import Playlist from './components/playlist/Playlist';
 import Newplaylist from './components/playlist/Newplaylist';
 import ArtistProfile from './components/artistpage/Artistprofile';
+import Player from './components/songplayer/Player';
 
 
 const AppRoutes = [
@@ -89,6 +90,11 @@ const AppRoutes = [
   {
     path: '/artistprofile',
     element: <ArtistProfile />
+  },
+
+  {
+    path: '/player',
+    element: <Player />
   }
 
 
