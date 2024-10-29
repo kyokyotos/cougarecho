@@ -1,50 +1,138 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Play, X, Music, LogOut } from 'lucide-react';
+import Player from './components/songplayer/Player';
 
-interface MusicItem {
-  song_id?: string;
-  artist_id?: string;
-  album_id?: string;
+// Database-aligned interfaces
+interface DBSong {
+  song_id: string;
+  path: string;
+  song_name: string;
+  duration: string;
+  plays: number;
+  album_id: string;
+  artist_id: string;
+  genre_id: string;
+  created_at: string;
+  isAvailable: boolean;
+}
+
+interface DBArtist {
+  artist_id: string;
+  artist_name: string;
+  country?: string;
+  bio?: string;
+  created_at: string;
+  user_id: string;
+  isVerified: boolean;
+}
+
+interface DBAlbum {
+  album_id: string;
+  album_name: string;
+  create_at: string;
+  path: string;
+  artist_id: string;
+}
+
+interface DBGenre {
+  genre_id: string;
+  genre_name: string;
+}
+
+// Combined interface for display
+interface SearchResultItem {
+  song_id: string;
   song_name: string;
   artist_name: string;
-  album_name: string; // Add album field to the MusicItem interface
-  genre_name?: string; // Add genre field to the MusicItem interface
-  duration: string; // Add duration field to the MusicItem interface
+  album_name: string;
+  genre_name: string;
+  duration: string;
+  path: string;
+  coverUrl?: string;
 }
 
 interface SearchResults {
-  music: MusicItem[];
-  artists: MusicItem[];
+  songs: SearchResultItem[];
+  artists: DBArtist[];
 }
 
 const SearchPage: React.FC = () => {
-  const [results, setResults] = useState<SearchResults>({ music: [], artists: [] });
+  const [results, setResults] = useState<SearchResults>({ songs: [], artists: [] });
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
+  const [currentSong, setCurrentSong] = useState<SearchResultItem | null>(null);
+  const [userId, setUserId] = useState<string>('');
+
+  useEffect(() => {
+    // Get userId from your auth system
+    const fetchUserId = async () => {
+      try {
+        const userJson = localStorage.getItem('user');
+        if (userJson) {
+          const userData = JSON.parse(userJson);
+          setUserId(userData.user_id);
+        }
+      } catch (error) {
+        console.error('Error fetching user ID:', error);
+      }
+    };
+    fetchUserId();
+  }, []);
 
   const searchKeyword = searchParams.get('keyword') || '';
   const searchType = searchParams.get('type') || 'all';
 
   const handleSearch = async () => {
     if (searchKeyword.trim() === '') {
-      setResults({ music: [], artists: [] });
+      setResults({ songs: [], artists: [] });
       return;
     }
 
     try {
-      // Fetch search results from your backend API
-      const response = await fetch(`http://localhost:5001/api/songs/search?keyword=${searchKeyword}`);
+      // Make the search request to your API
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/search`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          keyword: searchKeyword,
+          type: searchType
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error('Search request failed');
+      }
+
       const data = await response.json();
 
-      // Assuming the API returns an array of songs with name, artist, album, and duration
+      // Transform the data to match our display interface
+      const processedSongs: SearchResultItem[] = data.songs.map((song: DBSong & { 
+        artist: DBArtist, 
+        album: DBAlbum,
+        genre: DBGenre 
+      }) => ({
+        song_id: song.song_id,
+        song_name: song.song_name,
+        artist_name: song.artist.artist_name,
+        album_name: song.album.album_name,
+        genre_name: song.genre.genre_name,
+        duration: song.duration,
+        path: song.path,
+        coverUrl: `${import.meta.env.VITE_API_URL}/api/albums/${song.album_id}/cover`
+      }));
+
       setResults({
-        music: data, // Replace with data from your backend
-        artists: []  // If your API doesn't return artists, you can leave this empty
+        songs: processedSongs,
+        artists: data.artists || []
       });
+
     } catch (error) {
-      console.error('Error fetching search results:', error);
+      console.error('Error performing search:', error);
+      // You might want to show an error message to the user here
     }
   };
 
@@ -59,8 +147,30 @@ const SearchPage: React.FC = () => {
     navigate({ search: params.toString() });
   };
 
-  const handleSongClick = (songId: string) => {
-    navigate(`/song/${songId}`);
+  const handleSongPlay = async (song: SearchResultItem) => {
+    // First, record the play in SongPlayHistory
+    try {
+      await fetch(`${import.meta.env.VITE_API_URL}/api/songs/${song.song_id}/play`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          user_id: userId
+        })
+      });
+
+      // Update plays count in Songs table
+      await fetch(`${import.meta.env.VITE_API_URL}/api/songs/${song.song_id}/increment-plays`, {
+        method: 'POST'
+      });
+
+      // Set the current song for the player
+      setCurrentSong(song);
+
+    } catch (error) {
+      console.error('Error recording song play:', error);
+    }
   };
 
   const handleCreatePlaylist = () => {
@@ -68,11 +178,17 @@ const SearchPage: React.FC = () => {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('user');
     navigate('/#');
   };
 
+  const formatDuration = (duration: string) => {
+    const [minutes, seconds] = duration.split(':');
+    return `${minutes}:${seconds.padStart(2, '0')}`;
+  };
+
   return (
-    <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans">
+    <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans relative">
       {/* Sidebar */}
       <div className={`w-16 flex flex-col items-center py-4 bg-black border-r border-gray-800 transition-all duration-300 ease-in-out ${isMenuExpanded ? 'w-64' : 'w-16'}`}>
         <div className="flex flex-col items-center space-y-4 mb-8">
@@ -91,39 +207,9 @@ const SearchPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Expandable Menu */}
-      {isMenuExpanded && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="bg-[#121212] w-64 h-full p-4">
-            <button onClick={() => setIsMenuExpanded(false)} className="mb-8 text-[#1ED760]">
-              <X className="w-6 h-6" />
-            </button>
-            <nav>
-              <ul className="space-y-4">
-                <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
-                <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
-                <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
-                <li><Link to="/newplaylist" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</Link></li>
-              </ul>
-            </nav>
-            <div className="mt-auto">
-              <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
-                <User className="w-5 h-5 mr-3" /> Profile
-              </Link>
-              <button 
-                onClick={handleLogout}
-                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4"
-              >
-                <LogOut className="w-5 h-5 mr-3" /> Log out
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       {/* Main content */}
-      <div className="flex-1 flex flex-col p-8 overflow-y-auto">
-        {/* Top bar */}
+      <div className="flex-1 flex flex-col p-8 overflow-y-auto pb-20">
+        {/* Search bar */}
         <div className="flex items-center justify-between mb-8">
           <div className="flex-1 max-w-2xl">
             <div className="relative">
@@ -137,49 +223,55 @@ const SearchPage: React.FC = () => {
               />
             </div>
           </div>
-          <div className="flex items-center space-x-4">
-            <Link to="/homepage" className="text-[#1ED760] hover:text-white">
-              <Home className="w-6 h-6" />
-            </Link>
-            <Link to="/useredit" className="text-[#1ED760] hover:text-white">
-              <Settings className="w-6 h-6" />
-            </Link>
-          </div>
         </div>
 
         {/* Search Results */}
         {searchKeyword && (
           <div>
-            {results.music.length > 0 && (
+            {results.songs.length > 0 && (
               <div className="mb-6">
                 <h3 className="text-xl font-semibold mb-3">Songs</h3>
                 <div className="grid grid-cols-1 gap-2">
-                  {results.music.map((item) => (
+                  {results.songs.map((song) => (
                     <div 
-                      key={item.song_id} 
+                      key={song.song_id} 
                       className="bg-[#2A2A2A] p-3 rounded-lg flex items-center cursor-pointer hover:bg-[#3A3A3A] transition-colors"
-                      onClick={() => handleSongClick(item.song_id)}
+                      onClick={() => handleSongPlay(song)}
                     >
                       <Play className="w-4 h-4 mr-3 text-gray-400" />
                       <div className="flex-grow">
-                        <p className="font-semibold">{item.song_name}</p>
-                        <p className="text-sm text-gray-400">Artist: {item.artist_name}</p> {/* Display Artist Name */}
-                        <p className="text-sm text-gray-400">Album: {item.album_name}</p> {/* Display Album Name */}
-                        <p className="text-sm text-gray-400">Genre: {item.genre_name || 'Unknown'}</p> {/* Display Genre Name */}
+                        <p className="font-semibold">{song.song_name}</p>
+                        <p className="text-sm text-gray-400">Artist: {song.artist_name}</p>
+                        <p className="text-sm text-gray-400">Album: {song.album_name}</p>
+                        <p className="text-sm text-gray-400">Genre: {song.genre_name}</p>
                       </div>
-                      <p className="text-sm text-gray-400">{item.duration}</p> {/* Display Song Duration */}
+                      <p className="text-sm text-gray-400">{formatDuration(song.duration)}</p>
                     </div>
                   ))}
                 </div>
               </div>
             )}
 
-            {results.music.length === 0 && (
+            {results.songs.length === 0 && (
               <p className="text-center text-gray-400">No results found</p>
             )}
           </div>
         )}
       </div>
+
+      {/* Music Player */}
+      {currentSong && (
+        <MusicPlayer
+          currentSong={{
+            id: currentSong.song_id,
+            title: currentSong.song_name,
+            artist: currentSong.artist_name,
+            coverUrl: currentSong.coverUrl,
+            audioUrl: `${import.meta.env.VITE_API_URL}/api/songs/${currentSong.song_id}/stream`
+          }}
+          userId={userId}
+        />
+      )}
     </div>
   );
 };

@@ -2,41 +2,119 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Disc, X, Music, LogOut } from 'lucide-react';
 
+interface Artist {
+  artist_id: string;
+  name: string;
+  genre?: string;
+  bio?: string;
+  imageUrl?: string;
+}
+
+interface Album {
+  album_id: string;
+  title: string;
+  artist_name: string;
+  artist_id: string;
+  release_date?: string;
+  cover_url?: string;
+}
+
+// API service for handling database requests
+const api = {
+  fetchArtists: async (): Promise<Artist[]> => {
+    try {
+      const response = await fetch('http://localhost:3001/api/artists');
+      if (!response.ok) throw new Error('Failed to fetch artists');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching artists:', error);
+      return [];
+    }
+  },
+
+  fetchAlbums: async (): Promise<Album[]> => {
+    try {
+      const response = await fetch('http://localhost:3001/api/albums');
+      if (!response.ok) throw new Error('Failed to fetch albums');
+      return await response.json();
+    } catch (error) {
+      console.error('Error fetching albums:', error);
+      return [];
+    }
+  },
+
+  fetchUserType: async (): Promise<string> => {
+    try {
+      const token = localStorage.getItem('userToken');
+      if (!token) return 'listener';
+
+      const response = await fetch('http://localhost:3001/api/user/type', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to fetch user type');
+      const data = await response.json();
+      return data.accountType;
+    } catch (error) {
+      console.error('Error fetching user type:', error);
+      return 'listener';
+    }
+  }
+};
+
 const Homepage: React.FC = () => {
   const navigate = useNavigate();
   const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [accountType, setAccountType] = useState('listener'); // Can be 'listener', 'admin', or 'artist'
+  const [accountType, setAccountType] = useState('listener');
+  const [artists, setArtists] = useState<Artist[]>([]);
+  const [albums, setAlbums] = useState<Album[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const getProfilePath = () => {
     switch (accountType) {
       case 'artist':
-        return '/artistprofile';
+        return '/artist';
       case 'admin':
-        return '/adminprofile';
+        return '/admin';
       default:
-        return '/userprofile';
+        return '/listener';
     }
   };
 
   useEffect(() => {
     document.title = 'Homepage';
-    fetchAccountType();
+    
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+      
+      try {
+        const [artistsData, albumsData, userType] = await Promise.all([
+          api.fetchArtists(),
+          api.fetchAlbums(),
+          api.fetchUserType()
+        ]);
+
+        setArtists(artistsData);
+        setAlbums(albumsData);
+        setAccountType(userType);
+      } catch (err) {
+        setError('Failed to load content. Please try again later.');
+        console.error('Error loading homepage data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
-  const fetchAccountType = () => {
-    // This is a mock API call. In a real application, you'd fetch this from your backend
-    setTimeout(() => {
-      const types = ['listener', 'admin', 'artist'];
-      setAccountType(types[Math.floor(Math.random() * types.length)]);
-    }, 1000);
-  };
-
   const handleLogout = () => {
-    // Clear any auth tokens or user data
     localStorage.removeItem('userToken');
     sessionStorage.clear();
     
-    // Navigate to login with logout message
     navigate('/#', { 
       state: { 
         showLogoutMessage: true,
@@ -53,27 +131,29 @@ const Homepage: React.FC = () => {
     navigate('/search');
   };
 
-  const handleArtistClick = (artistId: number) => {
+  const handleArtistClick = (artistId: string) => {
     navigate(`/artist/${artistId}`);
   };
 
-  const handleAlbumClick = (albumId: number) => {
+  const handleAlbumClick = (albumId: string) => {
     navigate(`/album/${albumId}`);
   };
 
-  // Placeholder data (replace with real data in production)
-  const artists = [
-    { id: 1, name: "The Melodics" },
-    { id: 2, name: "Rhythm Collective" },
-    { id: 3, name: "Harmony Heights" },
-    { id: 4, name: "Sonic Waves" }
-  ];
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#121212]">
+        <div className="text-[#EBE7CD]">Loading...</div>
+      </div>
+    );
+  }
 
-  const albums = [
-    { id: 1, name: "Echoes of Dawn", artist: "The Melodics" },
-    { id: 2, name: "Urban Rhythms", artist: "Rhythm Collective" },
-    { id: 3, name: "Celestial Harmonies", artist: "Harmony Heights" }
-  ];
+  if (error) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#121212]">
+        <div className="text-red-500">{error}</div>
+      </div>
+    );
+  }
 
   return (
     <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans">
@@ -89,7 +169,9 @@ const Homepage: React.FC = () => {
           <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
             <PlusCircle className="w-6 h-6" />
           </button>
-          <Link to={getProfilePath()} aria-label="User Profile" className="text-[#1ED760] hover:text-white"><User className="w-6 h-6" /></Link>
+          <Link to={getProfilePath()} aria-label="User Profile" className="text-[#1ED760] hover:text-white">
+            <User className="w-6 h-6" />
+          </Link>
         </div>
       </div>
 
@@ -143,7 +225,9 @@ const Homepage: React.FC = () => {
             <Link to="/homepage" className="text-[#1ED760] hover:text-white">
               <Home className="w-6 h-6" />
             </Link>
-            <Link to={getProfilePath()} className="text-[#1ED760] hover:text-white"><Settings className="w-6 h-6" /></Link>
+            <Link to={getProfilePath()} className="text-[#1ED760] hover:text-white">
+              <Settings className="w-6 h-6" />
+            </Link>
           </div>
         </div>
 
@@ -154,12 +238,20 @@ const Homepage: React.FC = () => {
             <div className="grid grid-cols-4 gap-4">
               {artists.map((artist) => (
                 <button
-                  key={artist.id}
+                  key={artist.artist_id}
                   aria-label={`Explore ${artist.name}`}
                   className="w-full aspect-square bg-[#2A2A2A] rounded-full flex flex-col items-center justify-center hover:bg-[#3A3A3A] transition-colors"
-                  onClick={() => handleArtistClick(artist.id)}
+                  onClick={() => handleArtistClick(artist.artist_id)}
                 >
-                  <User className="w-1/2 h-1/2 text-gray-400 mb-2" />
+                  {artist.imageUrl ? (
+                    <img 
+                      src={artist.imageUrl} 
+                      alt={artist.name} 
+                      className="w-1/2 h-1/2 rounded-full object-cover mb-2"
+                    />
+                  ) : (
+                    <User className="w-1/2 h-1/2 text-gray-400 mb-2" />
+                  )}
                   <span className="text-sm text-center px-2">{artist.name}</span>
                 </button>
               ))}
@@ -171,14 +263,22 @@ const Homepage: React.FC = () => {
             <div className="grid grid-cols-3 gap-4">
               {albums.map((album) => (
                 <button
-                  key={album.id}
-                  aria-label={`Explore ${album.name} by ${album.artist}`}
+                  key={album.album_id}
+                  aria-label={`Explore ${album.title} by ${album.artist_name}`}
                   className="w-full aspect-square bg-[#2A2A2A] rounded-lg hover:bg-[#3A3A3A] transition-colors flex flex-col items-center justify-center p-4"
-                  onClick={() => handleAlbumClick(album.id)}
+                  onClick={() => handleAlbumClick(album.album_id)}
                 >
-                  <Disc className="w-1/2 h-1/2 text-gray-400 mb-2" />
-                  <span className="text-sm font-semibold text-center">{album.name}</span>
-                  <span className="text-xs text-gray-400 text-center mt-1">{album.artist}</span>
+                  {album.cover_url ? (
+                    <img 
+                      src={album.cover_url} 
+                      alt={album.title} 
+                      className="w-1/2 h-1/2 object-cover mb-2 rounded"
+                    />
+                  ) : (
+                    <Disc className="w-1/2 h-1/2 text-gray-400 mb-2" />
+                  )}
+                  <span className="text-sm font-semibold text-center">{album.title}</span>
+                  <span className="text-xs text-gray-400 text-center mt-1">{album.artist_name}</span>
                 </button>
               ))}
             </div>

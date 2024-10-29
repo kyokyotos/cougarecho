@@ -25,6 +25,14 @@ const Register = () => {
     number: false
   });
 
+  // Log initial component mount
+  useEffect(() => {
+    console.log('Register component mounted');
+    return () => {
+      console.log('Register component unmounted');
+    };
+  }, []);
+
   // Debounce function
   const debounce = (func: Function, wait: number) => {
     let timeout: NodeJS.Timeout;
@@ -36,7 +44,10 @@ const Register = () => {
 
   // Check username availability
   const checkUsername = async (username: string) => {
+    console.log('Initiating username check for:', username);
+    
     if (username.length < 3) {
+      console.log('Username too short:', username.length);
       setUsernameError('Username must be at least 3 characters long');
       setIsUsernameAvailable(false);
       return;
@@ -46,7 +57,7 @@ const Register = () => {
     setUsernameError('');
 
     try {
-      console.log('Checking username availability for:', username);
+      console.log('Making API request to check username');
       const response = await fetch(`${API_URL}/api/auth/check-username?username=${username}`, {
         method: 'GET',
         headers: {
@@ -55,14 +66,16 @@ const Register = () => {
       });
       
       const data = await response.json();
-      console.log('Username check response:', data);
+      console.log('Username check API response:', data);
 
       if (response.ok) {
+        console.log('Username availability:', data.isAvailable);
         setIsUsernameAvailable(data.isAvailable);
         if (!data.isAvailable) {
           setUsernameError('This username is already taken');
         }
       } else {
+        console.error('Username check failed:', response.status);
         setUsernameError('Error checking username availability');
         setIsUsernameAvailable(false);
       }
@@ -72,6 +85,7 @@ const Register = () => {
       setIsUsernameAvailable(false);
     } finally {
       setIsCheckingUsername(false);
+      console.log('Username check completed');
     }
   };
 
@@ -81,23 +95,32 @@ const Register = () => {
   // Handle username change
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const newUsername = e.target.value;
+    console.log('Username input changed:', newUsername);
     setUsername(newUsername);
-    console.log('Username changed to:', newUsername);
 
     if (newUsername.trim()) {
+      console.log('Triggering debounced username check');
       setIsCheckingUsername(true);
       debouncedCheckUsername(newUsername);
     } else {
+      console.log('Clearing username validation states');
       setIsUsernameAvailable(null);
       setUsernameError('');
     }
   };
 
+  // Password validation
   const validatePassword = (password: string) => {
-    console.log('Validating password...');
+    console.log('Validating password');
     const minLength = 8;
     const hasCapital = /[A-Z]/.test(password);
     const hasNumber = /[0-9]/.test(password);
+
+    console.log('Password validation results:', {
+      length: password.length >= minLength,
+      hasCapital,
+      hasNumber
+    });
 
     if (password.length < minLength) {
       return "Password must be at least 8 characters long";
@@ -113,46 +136,52 @@ const Register = () => {
 
   // Update password requirements in real-time
   useEffect(() => {
-    setPasswordRequirements({
+    console.log('Updating password requirements');
+    const newRequirements = {
       length: password.length >= 8,
       capital: /[A-Z]/.test(password),
       number: /[0-9]/.test(password)
-    });
+    };
+    console.log('New password requirements state:', newRequirements);
+    setPasswordRequirements(newRequirements);
   }, [password]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    // Log form data
-    console.log('Registration attempt with fields:', {
+    
+    // Log the entire form state
+    console.log('=== Registration Form Submission ===');
+    console.log('Form Data:', {
       username,
-      confirmPassword,
+      passwordLength: password.length,
+      confirmPasswordLength: confirmPassword.length,
       userType,
-      password: '********' // Don't log actual password
+      isUsernameAvailable,
+      passwordRequirements
     });
 
-    // Check username availability one final time
+    // Validation checks
     if (!isUsernameAvailable) {
-      console.log('Username not available:', username);
+      console.log('Registration blocked: Username not available');
       setError('Please choose a different username');
       return;
     }
 
     const passwordError = validatePassword(password);
     if (passwordError) {
-      console.log('Password validation failed:', passwordError);
+      console.log('Registration blocked: Password validation failed -', passwordError);
       setError(passwordError);
       return;
     }
 
     if (password !== confirmPassword) {
-      console.log('Passwords do not match');
+      console.log('Registration blocked: Passwords do not match');
       setError("Passwords don't match");
       return;
     }
 
     try {
-      console.log('Sending registration request to:', `${API_URL}/api/auth/register`);
+      console.log('Sending registration request to API');
       const response = await fetch(`${API_URL}/api/auth/register`, {
         method: 'POST',
         headers: {
@@ -165,25 +194,25 @@ const Register = () => {
         }),
       });
 
-      console.log('Registration response status:', response.status);
+      console.log('Registration API response status:', response.status);
       
       if (response.ok) {
-        console.log('Registration successful');
+        console.log('Registration successful - navigating to confirm page');
         navigate('/confirm');
       } else {
         const data = await response.json();
-        console.log('Registration failed:', data.message);
+        console.error('Registration API error:', data);
         setError(data.message || 'Registration failed');
       }
     } catch (error) {
-      console.error('Registration error:', error);
+      console.error('Registration request failed:', error);
       setError('Registration failed. Please try again.');
     }
   };
 
   const RequirementIcon = ({ met }: { met: boolean }) => (
-    met ?
-      <Check className="w-4 h-4 text-green-500" /> :
+    met ? 
+      <Check className="w-4 h-4 text-green-500" /> : 
       <X className="w-4 h-4 text-red-500" />
   );
 
@@ -280,10 +309,11 @@ const Register = () => {
             <button
               type="submit"
               disabled={!isUsernameAvailable || isCheckingUsername}
-              className={`w-full p-4 rounded-full ${!isUsernameAvailable || isCheckingUsername
-                ? 'bg-gray-500 cursor-not-allowed'
-                : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'
-                } text-[#FAF5CE]`}
+              className={`w-full p-4 rounded-full ${
+                !isUsernameAvailable || isCheckingUsername
+                  ? 'bg-gray-500 cursor-not-allowed'
+                  : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'
+              } text-[#FAF5CE]`}
             >
               Register
             </button>
