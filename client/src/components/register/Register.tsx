@@ -43,16 +43,8 @@ const Register = () => {
   };
 
   // Check username availability
-  const checkUsername = async (username: string) => {
-    setIsUsernameAvailable(true)
-    return
-    /*
-    const response = await axios.get(REGISTER_URL);
-        const ISGOOD = response.data[0];
-      );
-    */
+  const checkUsername = async () => {
     console.log('Initiating username check for:', username);
-
     if (username.length < 3) {
       console.log('Username too short:', username.length);
       setUsernameError('Username must be at least 3 characters long');
@@ -65,22 +57,17 @@ const Register = () => {
 
     try {
       console.log('Making API request to check username');
-      const response = await fetch(`/api/auth/check-username?username=${username}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await axios.get('/register/${username}');
+      const isAvailable = response.data[0] === 1 ? true : false;
+      //console.log('Username check API response:', data);
 
-      const data = await response.json();
-      console.log('Username check API response:', data);
-
-      if (response.ok) {
-        console.log('Username availability:', data.isAvailable);
-        setIsUsernameAvailable(data.isAvailable);
-        if (!data.isAvailable) {
+      if (response.status < 400) {
+        console.log('Username availability:', isAvailable);
+        if (!isAvailable) {
           setUsernameError('This username is already taken');
         }
+        setIsUsernameAvailable(isAvailable);
+
       } else {
         console.error('Username check failed:', response.status);
         setUsernameError('Error checking username availability');
@@ -100,7 +87,8 @@ const Register = () => {
   const debouncedCheckUsername = debounce(checkUsername, 500);
 
   // Handle username change
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const newUsername = e.target.value;
     console.log('Username input changed:', newUsername);
     setUsername(newUsername);
@@ -109,11 +97,13 @@ const Register = () => {
       console.log('Triggering debounced username check');
       setIsCheckingUsername(true);
       debouncedCheckUsername(newUsername);
+      //checkUsername(newUsername)
     } else {
       console.log('Clearing username validation states');
       setIsUsernameAvailable(null);
       setUsernameError('');
     }
+    setIsCheckingUsername(false);
   };
 
   // Password validation
@@ -168,6 +158,7 @@ const Register = () => {
     });
 
     // Validation checks
+    /*
     if (!isUsernameAvailable) {
       console.log('Registration blocked: Username not available');
       setError('Please choose a different username');
@@ -186,7 +177,7 @@ const Register = () => {
       setError("Passwords don't match");
       return;
     }
-
+    */
     try {
       console.log('Sending registration request to API');
       const response = await axios.post(REGISTER_URL,
@@ -232,6 +223,7 @@ const Register = () => {
       <X className="w-4 h-4 text-red-500" />
   );
 
+  const isRegisterDisabled = !isUsernameAvailable || isCheckingUsername;
   return (
     <div className="flex h-screen bg-[#0B3B24]">
       <div className="w-1/2 p-12 flex flex-col justify-between">
@@ -324,11 +316,10 @@ const Register = () => {
             </div>
             <button
               type="submit"
-              disabled={!isUsernameAvailable || isCheckingUsername}
-              className={`w-full p-4 rounded-full ${!isUsernameAvailable || isCheckingUsername
+              disabled={false /*isRegisterDisabled*/}
+              className={`w-full p-4 rounded-full text-[#FAF5CE] ${false /*!isUsernameAvailable || isCheckingUsername */
                 ? 'bg-gray-500 cursor-not-allowed'
-                : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'
-                } text-[#FAF5CE]`}
+                : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'} `}
             >
               Register
             </button>

@@ -143,22 +143,21 @@ router.get('/register/:username', async (req, res) => {
   try {
     const username = req.params.username;
     let myQuery =
-      'SELECT count(*) as total from [User] WHERE [username] = @username;';
+      'SELECT 1 as total from [User] WHERE [username] = @username;';
     const request = new sql.Request();
     request.input('username', sql.NVarChar, username);
     request.query(myQuery, async (err, result) => {
+
       if (result && result.recordset && result.recordset.length > 0) {
-        if (result.recordset[0].total > 0) {
-          return res.json({ isUsernameAvailable: false })
-        } else if (result.recordset[0].total === 0) {
-          return res.status(200).json({ isUsernameAvailable: true })
-        }
+
+        return res./*status(200).*/json({ "isUsernameAvailable": '0' })
       } else {
-        return res.status(500).json({ isUsernameAvailable: false, message: 'unknown value' })
+        return res./*status(200).*/json({ "isUsernameAvailable": '1' })
       }
     })
-  } catch (err) {
-
+  }
+  catch (err) {
+    return res.status(500).json({ isUsernameAvailable: '0', error: err.message })
   }
 });
 // End /register get method:
@@ -166,7 +165,7 @@ router.get('/register/:username', async (req, res) => {
 // Begin /register
 router.post('/register', async (req, res) => {
   try {
-    const { user_name, password, role_id } = req.body;
+    const { user_name: username, password, role_id } = req.body;
     if (!role_id || !password || !username) {
       return res.status(400).json({ error: 'All fields are required.' });
     }
@@ -176,7 +175,7 @@ router.post('/register', async (req, res) => {
           OUTPUT inserted.user_id, inserted.username, inserted.role_id
           VALUES (@user_name, @password_hash, GETDATE(), @role_id)`;
     const request = new sql.Request();
-    request.input('user_name', sql.NVarChar, user_name);
+    request.input('user_name', sql.NVarChar, username);
     request.input('password_hash', sql.NVarChar, password_hash);
     request.input('role_id', sql.Int, role_id);
     const result = await request.query(myQuery)//, async (err, result) => {
