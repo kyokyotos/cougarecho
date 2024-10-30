@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Disc, X, Music, LogOut } from 'lucide-react';
 
+// Use the deployed API URL directly
+const API_URL = 'https://cougarecho-4.uc.r.appspot.com';
+
 interface Artist {
   artist_id: string;
   name: string;
@@ -19,11 +22,11 @@ interface Album {
   cover_url?: string;
 }
 
-// API service for handling database requests
+// Updated API service to use the deployed URL
 const api = {
   fetchArtists: async (): Promise<Artist[]> => {
     try {
-      const response = await fetch('http://localhost:3001/api/artists');
+      const response = await fetch(`${API_URL}/api/artists`);
       if (!response.ok) throw new Error('Failed to fetch artists');
       return await response.json();
     } catch (error) {
@@ -34,7 +37,7 @@ const api = {
 
   fetchAlbums: async (): Promise<Album[]> => {
     try {
-      const response = await fetch('http://localhost:3001/api/albums');
+      const response = await fetch(`${API_URL}/api/albums`);
       if (!response.ok) throw new Error('Failed to fetch albums');
       return await response.json();
     } catch (error) {
@@ -48,7 +51,7 @@ const api = {
       const token = localStorage.getItem('userToken');
       if (!token) return 'listener';
 
-      const response = await fetch('http://localhost:3001/api/user/type', {
+      const response = await fetch(`${API_URL}/api/user/type`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

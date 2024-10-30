@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Play, Edit2, X, Music, LogOut, Image as ImageIcon } from 'lucide-react';
+import axios from 'axios';
+
 
 // Mock API with focused song database
 const mockApi = {
@@ -299,5 +301,50 @@ const CreatePlaylistPage = () => {
     </div>
   );
 };
+//form start
 
+const NewPlaylist = () => {
+  const [playlistName, setPlaylistName] = useState('');
+  const [songIds, setSongIds] = useState([]); // Array to store selected song IDs
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const response = await axios.post('/api/playlists/create', { playlistName, songIds });
+      alert(response.data.message);
+    } catch (error) {
+      console.error('Error creating playlist:', error);
+      alert('Failed to create playlist');
+    }
+  };
+
+  return (
+    <form onSubmit={handleSubmit}>
+      <label>
+        Playlist Name:
+        <input
+          type="text"
+          value={playlistName}
+          onChange={(e) => setPlaylistName(e.target.value)}
+          required
+        />
+      </label>
+
+      {/* Replace with dynamic song list */}
+      <label>
+        Song Selection:
+        <input
+          type="checkbox"
+          value="1" // Example song ID
+          onChange={(e) => setSongIds([...songIds, e.target.value])}
+        />
+        Song 1
+      </label>
+
+      <button type="submit">Create Playlist</button>
+    </form>
+  );
+};
+//form end
 export default CreatePlaylistPage;
