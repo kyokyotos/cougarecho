@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, X, Loader } from 'lucide-react';
+import axios from '../../api/axios';
 
-// Use the configured API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://cougarecho-4.uc.r.appspot.com';
+const REGISTER_URL = '/register';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -44,8 +44,15 @@ const Register = () => {
 
   // Check username availability
   const checkUsername = async (username: string) => {
+    setIsUsernameAvailable(true)
+    return
+    /*
+    const response = await axios.get(REGISTER_URL);
+        const ISGOOD = response.data[0];
+      );
+    */
     console.log('Initiating username check for:', username);
-    
+
     if (username.length < 3) {
       console.log('Username too short:', username.length);
       setUsernameError('Username must be at least 3 characters long');
@@ -58,13 +65,13 @@ const Register = () => {
 
     try {
       console.log('Making API request to check username');
-      const response = await fetch(`${API_URL}/api/auth/check-username?username=${username}`, {
+      const response = await fetch(`/api/auth/check-username?username=${username}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
         },
       });
-      
+
       const data = await response.json();
       console.log('Username check API response:', data);
 
@@ -148,7 +155,7 @@ const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Log the entire form state
     console.log('=== Registration Form Submission ===');
     console.log('Form Data:', {
@@ -182,28 +189,37 @@ const Register = () => {
 
     try {
       console.log('Sending registration request to API');
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          password,
-          userType
-        }),
-      });
+      const response = await axios.post(REGISTER_URL,
+        JSON.stringify({ username, password, role_id: userType }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: false
+        }
+      );
+      if (response.status === 200) {
+        console.log("Request successful:", response.data);
+        // Further code to handle successful response
+      } else if (response.status === 404) {
+        console.log("Resource not found");
+      } else {
+        console.log(`Unexpected status: ${response.status}`);
+      }
+      console.log(JSON.stringify(response?.data));
+      //console.log(JSON.stringify(response));
+      if (response.data && response.data.token) {
+        const token = response.data.token;
+
+        // Store the token in localStorage
+        localStorage.setItem('token', token);
+
+        // Optionally, return the token or any other data
+        return token;
+      }
+      const accessToken = response?.data?.accessToken;
+      const role_id = response?.data?.roles;
 
       console.log('Registration API response status:', response.status);
-      
-      if (response.ok) {
-        console.log('Registration successful - navigating to confirm page');
-        navigate('/confirm');
-      } else {
-        const data = await response.json();
-        console.error('Registration API error:', data);
-        setError(data.message || 'Registration failed');
-      }
+
     } catch (error) {
       console.error('Registration request failed:', error);
       setError('Registration failed. Please try again.');
@@ -211,8 +227,8 @@ const Register = () => {
   };
 
   const RequirementIcon = ({ met }: { met: boolean }) => (
-    met ? 
-      <Check className="w-4 h-4 text-green-500" /> : 
+    met ?
+      <Check className="w-4 h-4 text-green-500" /> :
       <X className="w-4 h-4 text-red-500" />
   );
 
@@ -309,11 +325,10 @@ const Register = () => {
             <button
               type="submit"
               disabled={!isUsernameAvailable || isCheckingUsername}
-              className={`w-full p-4 rounded-full ${
-                !isUsernameAvailable || isCheckingUsername
-                  ? 'bg-gray-500 cursor-not-allowed'
-                  : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'
-              } text-[#FAF5CE]`}
+              className={`w-full p-4 rounded-full ${!isUsernameAvailable || isCheckingUsername
+                ? 'bg-gray-500 cursor-not-allowed'
+                : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'
+                } text-[#FAF5CE]`}
             >
               Register
             </button>

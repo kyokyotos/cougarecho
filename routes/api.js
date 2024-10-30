@@ -138,55 +138,59 @@ router.post('/login', async (req, res) => {
 });
 // End /login
 
+// Begin /register get method: This method checks if username is available.
+router.get('/register/:username', async (req, res) => {
+  try {
+    const username = req.params.username;
+    let myQuery =
+      'SELECT count(*) as total from [User] WHERE [username] = @username;';
+    const request = new sql.Request();
+    request.input('username', sql.NVarChar, username);
+    request.query(myQuery, async (err, result) => {
+      if (result && result.recordset && result.recordset.length > 0) {
+        if (result.recordset[0].total > 0) {
+          return res.json({ isUsernameAvailable: false })
+        } else if (result.recordset[0].total === 0) {
+          return res.status(200).json({ isUsernameAvailable: true })
+        }
+      } else {
+        return res.status(500).json({ isUsernameAvailable: false, message: 'unknown value' })
+      }
+    })
+  } catch (err) {
+
+  }
+});
+// End /register get method:
+
 // Begin /register
 router.post('/register', async (req, res) => {
   try {
     const { user_name, password, role_id } = req.body;
-    //console.log(user_name + " " + password)
-    // If either
-    if (!role_id && !password) {
-      if (user_name == "") {
-        return res.status(400).json({ error: 'All fields are required.' });
-      }
-      // Request to verify user name availabilty. If request doesn't have 3
-      // parameters then its a username verification call.
-      let myQuery =
-        'SELECT count(*) as total from [User] WHERE [username] = @user_name;';
-      const request = new sql.Request();
-      request.input('user_name', sql.NVarChar, user_name);
-      request.query(myQuery, async (err, result) => {
-        if (result && result.recordset && result.recordset.length > 0) {
-          return res.status(sername_count === 0 ? 200 : 400).json({ usernameAvailable })
-        } else {
-          return res.json({ error: "database server did not return anything." })
-        }
-      })
-    } else if (user_name !== "" && password && role_id) {
-      const password_hash = await bcrypt.hash(password, 4);
-      const myQuery = `
+    if (!role_id || !password || !username) {
+      return res.status(400).json({ error: 'All fields are required.' });
+    }
+    const password_hash = await bcrypt.hash(password, 4);
+    const myQuery = `
           INSERT INTO [User] (username, password_hash, created_at, role_id)
           OUTPUT inserted.user_id, inserted.username, inserted.role_id
           VALUES (@user_name, @password_hash, GETDATE(), @role_id)`;
-      const request = new sql.Request();
-      request.input('user_name', sql.NVarChar, user_name);
-      request.input('password_hash', sql.NVarChar, password_hash);
-      request.input('role_id', sql.Int, role_id);
-      const result = await request.query(myQuery)//, async (err, result) => {
-      if (result.rowsAffected[0] == 1) {
-        const token = jwt.sign(
-          {
-            user_id: result.recordset[0], user_name: result.recordset[1], role_id: result.recordset[2]
-          },
-          SECRET_KEY,
-          { expiresIn: '1h' }
-        );
-        res.json({ token });
-      } else {
-        res.json({ error: "database server did not return anything." })
-      }
-    }
-    else {
-      res.json({ error: "error" })
+    const request = new sql.Request();
+    request.input('user_name', sql.NVarChar, user_name);
+    request.input('password_hash', sql.NVarChar, password_hash);
+    request.input('role_id', sql.Int, role_id);
+    const result = await request.query(myQuery)//, async (err, result) => {
+    if (result.rowsAffected[0] == 1) {
+      const token = jwt.sign(
+        {
+          user_id: result.recordset[0], user_name: result.recordset[1], role_id: result.recordset[2]
+        },
+        SECRET_KEY,
+        { expiresIn: '1h' }
+      );
+      res.json({ token });
+    } else {
+      res.json({ error: "database server did not return anything." })
     }
   } catch (error) {
     res.json({ "error": error.message })
