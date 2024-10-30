@@ -1,5 +1,7 @@
 import axios from 'axios';
-const BASE_URL = '/api';
+import dotenv from 'dotenv';
+const ISLOCAL = true;
+const BASE_URL = ISLOCAL ? 'http://localhost:8080/api' : '/api';
 
 export default axios.create({
     baseURL: BASE_URL

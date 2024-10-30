@@ -1,4 +1,4 @@
-const allowedOrigins = ['http://localhost:3000', 'http://localhost:443', 'https://cougarecho.de.r.appspot.com', ':///workspace']
+const allowedOrigins = ['http://localhost:5173', 'http://localhost:8080']
 
 const corsOptions = {
     origin: (origin, callback) => {
