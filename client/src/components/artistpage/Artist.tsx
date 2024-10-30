@@ -11,8 +11,7 @@ const mockApi = {
     setTimeout(() => resolve({
       name: 'Trousers',
       streams: 600000,
-      likesSaves: 45000,
-      revenue: 800
+      likesSaves: 45000
     }), 500)
   ),
 };
@@ -21,7 +20,7 @@ const Artist = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [artistProfile, setArtistProfile] = useState({ name: '', albums: 0, songs: 0 });
-  const [latestAlbum, setLatestAlbum] = useState({ name: '', streams: 0, likesSaves: 0, revenue: 0 });
+  const [latestAlbum, setLatestAlbum] = useState({ name: '', streams: 0, likesSaves: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const [searchValue, setSearchValue] = useState('');
@@ -56,11 +55,9 @@ const Artist = () => {
   }, [location]);
 
   const handleLogout = () => {
-    // Clear any auth tokens or user data
     localStorage.removeItem('userToken');
     sessionStorage.clear();
     
-    // Navigate to login with logout message
     navigate('/#', { 
       state: { 
         showLogoutMessage: true,
@@ -192,12 +189,6 @@ const Artist = () => {
                   >
                     Add New Album
                   </Link>
-                  <Link 
-                    to="/newsong" 
-                    className="bg-[#2A2A2A] text-[#EBE7CD] px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#3A3A3A] transition-colors"
-                  >
-                    Add New Song
-                  </Link>
                 </div>
               </div>
             </div>
@@ -215,7 +206,6 @@ const Artist = () => {
                 <div className="space-y-1">
                   <p className="text-sm text-gray-400">Streams: {latestAlbum.streams.toLocaleString()}</p>
                   <p className="text-sm text-gray-400">Likes/Saves: {latestAlbum.likesSaves.toLocaleString()}</p>
-                  <p className="text-sm text-gray-400">Revenue: ${latestAlbum.revenue.toLocaleString()}</p>
                 </div>
               </div>
               <button className="bg-[#1ED760] text-black px-4 py-2 rounded-full text-sm hover:bg-[#1DB954] transition-colors">
