@@ -58,7 +58,7 @@ const Register = () => {
     try {
       console.log('Making API request to check username');
       const response = await axios.get('/register/${username}');
-      const isAvailable = response.data[0] === 1 ? true : false;
+      const isAvailable = response?.data?.isAvailable == 1 ? true : false;
       //console.log('Username check API response:', data);
 
       if (response.status < 400) {
@@ -145,7 +145,7 @@ const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-
+    /*
     // Log the entire form state
     console.log('=== Registration Form Submission ===');
     console.log('Form Data:', {
@@ -158,7 +158,7 @@ const Register = () => {
     });
 
     // Validation checks
-    /*
+    
     if (!isUsernameAvailable) {
       console.log('Registration blocked: Username not available');
       setError('Please choose a different username');
@@ -188,7 +188,7 @@ const Register = () => {
         }
       );
       if (response.status === 200) {
-        console.log("Request successful:", response.data);
+        console.log("Request successful:", response?.data);
         // Further code to handle successful response
       } else if (response.status === 404) {
         console.log("Resource not found");
@@ -197,17 +197,16 @@ const Register = () => {
       }
       console.log(JSON.stringify(response?.data));
       //console.log(JSON.stringify(response));
-      if (response.data && response.data.token) {
+      if (response?.data && response?.data?.token) {
         const token = response.data.token;
 
         // Store the token in localStorage
         localStorage.setItem('token', token);
 
         // Optionally, return the token or any other data
-        return token;
+        //return token;
       }
-      const accessToken = response?.data?.accessToken;
-      const role_id = response?.data?.roles;
+
 
       console.log('Registration API response status:', response.status);
 

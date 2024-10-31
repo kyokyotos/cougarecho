@@ -1,5 +1,4 @@
 import axios from 'axios';
-import dotenv from 'dotenv';
 const ISLOCAL = true;
 const BASE_URL = ISLOCAL ? 'http://localhost:8080/api' : '/api';
 

@@ -9,6 +9,7 @@ dotenv.config();
 
 const router = express.Router();
 const SECRET_KEY = process.env.ACCESS_TOKEN_SECRET;
+const userRoles = { "Listener": 1, "": 2, "": 3 }
 
 router.get("/data", async (req, res) => {
   try {
@@ -165,7 +166,7 @@ router.get('/register/:username', async (req, res) => {
 // Begin /register
 router.post('/register', async (req, res) => {
   try {
-    const { user_name: username, password, role_id } = req.body;
+    const { username, password, role_id } = req.body;
     if (!role_id || !password || !username) {
       return res.status(400).json({ error: 'All fields are required.' });
     }
@@ -177,9 +178,9 @@ router.post('/register', async (req, res) => {
     const request = new sql.Request();
     request.input('user_name', sql.NVarChar, username);
     request.input('password_hash', sql.NVarChar, password_hash);
-    request.input('role_id', sql.Int, role_id);
+    request.input('role_id', sql.Int, userRoles[role_id]);
     const result = await request.query(myQuery)//, async (err, result) => {
-    if (result.rowsAffected[0] == 1) {
+    if (result?.rowsAffected[0] == 1) {
       const token = jwt.sign(
         {
           user_id: result.recordset[0], user_name: result.recordset[1], role_id: result.recordset[2]
