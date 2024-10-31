@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Check, X, Loader } from 'lucide-react';
+import axios from '../../api/axios';
 
-// Use the configured API URL
-const API_URL = import.meta.env.VITE_API_URL || 'https://cougarecho-4.uc.r.appspot.com';
+const REGISTER_URL = '/register';
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -43,9 +43,8 @@ const Register = () => {
   };
 
   // Check username availability
-  const checkUsername = async (username: string) => {
+  const checkUsername = async () => {
     console.log('Initiating username check for:', username);
-    
     if (username.length < 3) {
       console.log('Username too short:', username.length);
       setUsernameError('Username must be at least 3 characters long');
@@ -58,22 +57,17 @@ const Register = () => {
 
     try {
       console.log('Making API request to check username');
-      const response = await fetch(`${API_URL}/api/auth/check-username?username=${username}`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      
-      const data = await response.json();
-      console.log('Username check API response:', data);
+      const response = await axios.get('/register/${username}');
+      const isAvailable = response?.data?.isAvailable == 1 ? true : false;
+      //console.log('Username check API response:', data);
 
-      if (response.ok) {
-        console.log('Username availability:', data.isAvailable);
-        setIsUsernameAvailable(data.isAvailable);
-        if (!data.isAvailable) {
+      if (response.status < 400) {
+        console.log('Username availability:', isAvailable);
+        if (!isAvailable) {
           setUsernameError('This username is already taken');
         }
+        setIsUsernameAvailable(isAvailable);
+
       } else {
         console.error('Username check failed:', response.status);
         setUsernameError('Error checking username availability');
@@ -93,7 +87,8 @@ const Register = () => {
   const debouncedCheckUsername = debounce(checkUsername, 500);
 
   // Handle username change
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUsernameChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    e.preventDefault();
     const newUsername = e.target.value;
     console.log('Username input changed:', newUsername);
     setUsername(newUsername);
@@ -102,11 +97,13 @@ const Register = () => {
       console.log('Triggering debounced username check');
       setIsCheckingUsername(true);
       debouncedCheckUsername(newUsername);
+      //checkUsername(newUsername)
     } else {
       console.log('Clearing username validation states');
       setIsUsernameAvailable(null);
       setUsernameError('');
     }
+    setIsCheckingUsername(false);
   };
 
   // Password validation
@@ -148,7 +145,7 @@ const Register = () => {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+    /*
     // Log the entire form state
     console.log('=== Registration Form Submission ===');
     console.log('Form Data:', {
@@ -161,6 +158,7 @@ const Register = () => {
     });
 
     // Validation checks
+    
     if (!isUsernameAvailable) {
       console.log('Registration blocked: Username not available');
       setError('Please choose a different username');
@@ -179,31 +177,39 @@ const Register = () => {
       setError("Passwords don't match");
       return;
     }
-
+    */
     try {
       console.log('Sending registration request to API');
-      const response = await fetch(`${API_URL}/api/auth/register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          username,
-          password,
-          userType
-        }),
-      });
+      const response = await axios.post(REGISTER_URL,
+        JSON.stringify({ username, password, role_id: userType }),
+        {
+          headers: { 'Content-Type': 'application/json' },
+          withCredentials: false
+        }
+      );
+      if (response.status === 200) {
+        console.log("Request successful:", response?.data);
+        // Further code to handle successful response
+      } else if (response.status === 404) {
+        console.log("Resource not found");
+      } else {
+        console.log(`Unexpected status: ${response.status}`);
+      }
+      console.log(JSON.stringify(response?.data));
+      //console.log(JSON.stringify(response));
+      if (response?.data && response?.data?.token) {
+        const token = response.data.token;
+
+        // Store the token in localStorage
+        localStorage.setItem('token', token);
+
+        // Optionally, return the token or any other data
+        //return token;
+      }
+
 
       console.log('Registration API response status:', response.status);
-      
-      if (response.ok) {
-        console.log('Registration successful - navigating to confirm page');
-        navigate('/confirm');
-      } else {
-        const data = await response.json();
-        console.error('Registration API error:', data);
-        setError(data.message || 'Registration failed');
-      }
+
     } catch (error) {
       console.error('Registration request failed:', error);
       setError('Registration failed. Please try again.');
@@ -211,11 +217,12 @@ const Register = () => {
   };
 
   const RequirementIcon = ({ met }: { met: boolean }) => (
-    met ? 
-      <Check className="w-4 h-4 text-green-500" /> : 
+    met ?
+      <Check className="w-4 h-4 text-green-500" /> :
       <X className="w-4 h-4 text-red-500" />
   );
 
+  const isRegisterDisabled = !isUsernameAvailable || isCheckingUsername;
   return (
     <div className="flex h-screen bg-[#0B3B24]">
       <div className="w-1/2 p-12 flex flex-col justify-between">
@@ -308,12 +315,10 @@ const Register = () => {
             </div>
             <button
               type="submit"
-              disabled={!isUsernameAvailable || isCheckingUsername}
-              className={`w-full p-4 rounded-full ${
-                !isUsernameAvailable || isCheckingUsername
-                  ? 'bg-gray-500 cursor-not-allowed'
-                  : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'
-              } text-[#FAF5CE]`}
+              disabled={false /*isRegisterDisabled*/}
+              className={`w-full p-4 rounded-full text-[#FAF5CE] ${false /*!isUsernameAvailable || isCheckingUsername */
+                ? 'bg-gray-500 cursor-not-allowed'
+                : 'bg-[#4a8f4f] hover:bg-[#5aa55f]'} `}
             >
               Register
             </button>

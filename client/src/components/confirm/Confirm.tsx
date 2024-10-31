@@ -15,8 +15,8 @@ const Confirm = () => {
   return (
     <div className="flex h-screen bg-[#0B3B24]">
       <div className="w-1/2 p-12 flex flex-col justify-between bg-[#0B3B24]">
-        <Link 
-          to="/" 
+        <Link
+          to="/"
           className="text-[#FAF5CE] text-2xl font-bold hover:text-[#FFFAD6] transition-colors duration-300"
         >
           echo
@@ -30,7 +30,7 @@ const Confirm = () => {
       </div>
       <div className="w-1/2 bg-[#1C1C1C] flex justify-center items-center relative">
         <img
-          src="/src/assets/undraw_celebrating_rtuv 2.png"
+          src="/public/assets/undraw_celebrating_rtuv 2.png"
           alt="Celebration"
           className="max-w-full max-h-full object-contain"
           onError={(e) => {
