@@ -30,22 +30,25 @@ const LoginPage = () => {
     // Add your login logic here
     try {
       const response = await axios.post(LOGIN_URL,
-        JSON.stringify({ user_name: username, password }),
+        JSON.stringify({ username, password }),
         {
           headers: { 'Content-Type': 'application/json' },
           withCredentials: false
         }
       );
       console.log(JSON.stringify(response?.data));
-      //console.log(JSON.stringify(response));
-      const accessToken = response?.data?.accessToken;
-      const role_id = response?.data?.roles;
-      setAuth({ username, password, roles: role_id, accessToken });
-      setUsername('');
-      setPassword('');
-      if (from !== "/") {
-        navigate(from, { replace: true });
-      } else {
+      const { token, role_id } = response.data;
+      localStorage.setItem('token', token);
+      switch (role_id) {
+        case 1:
+          navigate('/listener')
+          break;
+        case 2:
+          navigate('/artist')
+          break;
+        case 3:
+          navigate('/admin')
+          break;
 
       }
 

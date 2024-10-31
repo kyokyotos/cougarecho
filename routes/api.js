@@ -9,7 +9,7 @@ dotenv.config();
 
 const router = express.Router();
 const SECRET_KEY = process.env.ACCESS_TOKEN_SECRET;
-const userRoles = { "Listener": 1, "": 2, "": 3 }
+const userRoles = { "Listener": 1, "Artist": 2, "Admin": 3 }
 
 router.get("/data", async (req, res) => {
   try {
@@ -78,21 +78,21 @@ router.post('/album/insert', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  const { user_name, password } = req.body;
+  const { username, password } = req.body;
   //console.log(user_name + " " + password)
-  if (!user_name || !password) {
+  if (!username || !password) {
     return res.status(400).json({ message: 'All fields are required.' });
   }
   let myQuery =
-    'SELECT user_id, password_hash, role_id FROM [User] WHERE username = @user_name;';
+    'SELECT user_id, username, password_hash, role_id FROM [User] WHERE username = @username;';
   const request = new sql.Request();
-  request.input('user_name', sql.NVarChar, user_name);
+  request.input('username', sql.NVarChar, username);
   request.query(myQuery, async (err, result) => {
 
 
-    const user = result.recordset[0];
+    const user = result?.recordset?.[0];
     if (!user) {
-      console.log(result.recordset.length)
+      console.log(result?.recordset?.length)
 
       return res.status(200).json({ token: "" });
     }
@@ -103,12 +103,13 @@ router.post('/login', async (req, res) => {
       }
       if (result) {
         console.log("Passwords match")
+        const role_id = user.role_id
         const token = jwt.sign(
-          { id: user.user_id, role: user.role_id },
+          { user_id: user.user_id, username: user.username, role_id },
           SECRET_KEY,
           { expiresIn: '1h' }
         );
-        return res.status(200).json({ token });
+        return res.status(200).json({ token, role_id });
       } else {
         console.log("Passwords do not match")
         const token = "";

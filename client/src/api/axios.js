@@ -1,5 +1,5 @@
 import axios from 'axios';
-const ISLOCAL = true;
+const ISLOCAL = false;
 const BASE_URL = ISLOCAL ? 'http://localhost:8080/api' : '/api';
 
 export default axios.create({
