@@ -32,14 +32,36 @@ router.get('/artist/:id', async (req, res) => {
     const request = await new sql.Request();
     request.input('user_id', sql.Int, id)
     const myQuery = `SELECT A.artist_id, U.display_name,
-          (SELECT COUNT(DISTINCT album_id) FROM Album WHERE artist_id = A.artist_id)  album_count,
-          (SELECT COUNT(DISTINCT artist_id) FROM Song WHERE artist_id =a.artist_id)  song_count
+          (SELECT COUNT(album_id) FROM Album WHERE artist_id = A.artist_id)  album_count,
+          (SELECT COUNT(artist_id) FROM Song WHERE artist_id =a.artist_id)  song_count
           FROM [Artist] A, [User] U WHERE A.user_id = U.user_id and A.user_id = @user_id`;
     request.query(myQuery, async (err, result) => {
       if (result?.recordset?.length > 0) {
         res.json(result.recordset[0]);
       } else {
         res.json({ artist_id: '', artist_name: '', album_count: 0, song_count: 0 });
+      }
+    })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+router.get('/artist/:id/albumlatest', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const request = await new sql.Request();
+    request.input('user_id', sql.Int, id)
+    const myQuery = 'SELECT A.album_name,\
+          (Select SUM(B.plays) FROM Song B WHERE A.album_id = B.album_id ) album_streams, \
+          (Select COUNT(C.song_id) FROM [Likes] C, [Song] D WHERE C.song_id = D.song_id and D.album_id = A.album_id ) album_likes \
+          FROM [Album] A, [Artist] ART WHERE A.artist_id = ART.artist_id and ART.user_id = @user_id and A.create_at = \
+          (select max(A_NEW.create_at) from [Album] A_NEW where A_NEW.album_id = A.album_id);';
+    request.query(myQuery, async (err, result) => {
+      if (result?.recordset?.length > 0) {
+        res.json(result.recordset[0]);
+      } else {
+        res.json({ album_name: '', album_streams: '', album_likes: '' });
       }
     })
 
