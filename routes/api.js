@@ -30,11 +30,11 @@ router.get('/artist/:id', async (req, res) => {
   try {
     const id = req.params.id;
     const request = await new sql.Request();
-    request.input('artist_id', sql.Int, id)
-    const myQuery = `SELECT A.artist_id, A.artist_name,
+    request.input('user_id', sql.Int, id)
+    const myQuery = `SELECT A.artist_id, U.display_name,
           (SELECT COUNT(DISTINCT album_id) FROM Album WHERE artist_id = A.artist_id)  album_count,
           (SELECT COUNT(DISTINCT artist_id) FROM Song WHERE artist_id =a.artist_id)  song_count
-          FROM Artist A WHERE A.artist_id = @artist_id`;
+          FROM [Artist] A, [User] U WHERE A.user_id = U.user_id and A.user_id = @user_id`;
     request.query(myQuery, async (err, result) => {
       if (result?.recordset?.length > 0) {
         res.json(result.recordset[0]);
@@ -132,33 +132,13 @@ router.post('/login', async (req, res) => {
           SECRET_KEY,
           { expiresIn: '1h' }
         );
-        return res.status(200).json({ token, role_id });
+        return res.json({ token, user_id: user.user_id, username: user.username, role_id });
       } else {
         console.log("Passwords do not match")
         const token = "";
         return res.status(200).json({ token: "" });
       }
     })
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    console.log("user.password_hash:\n" + user.password_hash)
-
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
-    }
-    const token = jwt.sign(
-      { id: user.user_id, role: user.role_id },
-      SECRET_KEY,
-      { expiresIn: '1h' }
-    );
-    /*
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true,
-    });
-    
-    const role_id = user.role_id
-    res.json({ token });
-    */
   });
 });
 // End /login

@@ -22,6 +22,7 @@ const App = () => {
         </Route>
         <Route element={<AuthRoute role={2} />}>
           <Route path='/artist' element={<Artist />} />
+          <Route path='/artist/:id' element={<Artist />} />
         </Route>
         <Route element={<AuthRoute role={1} />}>
           <Route path='/listener' element={<Listener />} />

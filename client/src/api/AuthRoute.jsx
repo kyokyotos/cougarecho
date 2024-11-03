@@ -1,14 +1,15 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
+import { UserContext } from '../context/UserContext';
+
 
 // Authenticated route component
 const AuthRoute = ({ role }) => {
     const [token] = useState(() =>
         localStorage.getItem('token'))
-    const [role_id] = useState(() =>
-        localStorage.getItem('role_id'))
+    const { user } = useContext(UserContext)
 
-    return token && role <= role_id ? <Outlet /> : <Navigate to="/login" replace />;
+    return token && role <= user.role_id ? <Outlet /> : <Navigate to="/login" replace />;
 };
 
 export default AuthRoute;
