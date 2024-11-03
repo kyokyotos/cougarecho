@@ -20,6 +20,8 @@ const LoginPage = () => {
   const [errMsg, setErrMsg] = useState('');
   const [role_id, setRole_id] = useState();
 
+  localStorage.removeItem('token');
+  localStorage.removeItem('role_id');
   useEffect(() => {
     setErrMsg('');
   }, [username, password])
@@ -39,6 +41,8 @@ const LoginPage = () => {
       console.log(JSON.stringify(response?.data));
       const { token, role_id } = response.data;
       localStorage.setItem('token', token);
+      localStorage.setItem('role_id', role_id);
+
       switch (role_id) {
         case 1:
           navigate('/listener')
