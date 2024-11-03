@@ -25,6 +25,29 @@ router.get("/data", async (req, res) => {
 router.get("/test", (req, res) => {
   res.json([{ "test": "hello world!" }])
 });
+// Get artist profile and counts
+router.get('/artist/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const request = await new sql.Request();
+    request.input('artist_id', sql.Int, id)
+    const myQuery = `SELECT A.artist_id, A.artist_name,
+          (SELECT COUNT(DISTINCT album_id) FROM Album WHERE artist_id = A.artist_id)  album_count,
+          (SELECT COUNT(DISTINCT artist_id) FROM Song WHERE artist_id =a.artist_id)  song_count
+          FROM Artist A WHERE A.artist_id = @artist_id`;
+    request.query(myQuery, async (err, result) => {
+      if (result?.recordset?.length > 0) {
+        res.json(result.recordset[0]);
+      } else {
+        res.json({ artist_id: '', artist_name: '', album_count: 0, song_count: 0 });
+      }
+    })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // Begin Josh Lewis
 
 // Connection is successfull
