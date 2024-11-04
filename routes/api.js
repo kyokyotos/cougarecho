@@ -39,7 +39,7 @@ router.get('/artist/:id', async (req, res) => {
       if (result?.recordset?.length > 0) {
         res.json(result.recordset[0]);
       } else {
-        res.json({ artist_id: '', artist_name: '', album_count: 0, song_count: 0 });
+        res.json({ artist_id: '', artist_name: '', album_count: '', song_count: '' });
       }
     })
 
@@ -61,7 +61,7 @@ router.get('/artist/:id/albumlatest', async (req, res) => {
       if (result?.recordset?.length > 0) {
         res.json(result.recordset[0]);
       } else {
-        res.json({ album_name: '', album_streams: '', album_likes: '' });
+        res.json({ album_name: '', album_streams: 0, album_likes: 0 });
       }
     })
 
