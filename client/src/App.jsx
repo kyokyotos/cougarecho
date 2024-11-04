@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route } from 'react-router-dom';
-import AppRoutes from './AppRoutes.jsx';
+import { PublicRoutes, ListenerRoutes, ArtistRoutes, AdminRoutes } from './AppRoutes.jsx';
 import { Layout } from './components/Layout';
 import AuthRoute from './api/AuthRoute';
 import Artist from './components/artistpage/Artist';
@@ -10,22 +10,30 @@ import Admin from './components/admin/Admin';
 
 const App = () => {
   return (
+
     <Layout>
       <Routes>
-
-        {AppRoutes.map((route, index) => {
+        {PublicRoutes.map((route, index) => {
           const { element, ...rest } = route;
           return <Route key={index} {...rest} element={element} />;
         })}
-        <Route element={<AuthRoute role={3} />}>
-          <Route path='/admin' element={<Admin />} />
+        <Route element={<AuthRoute role={1} />}>
+          {ListenerRoutes.map((route, index) => {
+            const { element, ...rest } = route;
+            return <Route key={index} {...rest} element={element} />;
+          })}
         </Route>
         <Route element={<AuthRoute role={2} />}>
-          <Route path='/artist' element={<Artist />} />
-          <Route path='/artist/:id' element={<Artist />} />
+          {ArtistRoutes.map((route, index) => {
+            const { element, ...rest } = route;
+            return <Route key={index} {...rest} element={element} />;
+          })}
         </Route>
-        <Route element={<AuthRoute role={1} />}>
-          <Route path='/listener' element={<Listener />} />
+        <Route element={<AuthRoute role={3} />}>
+          {AdminRoutes.map((route, index) => {
+            const { element, ...rest } = route;
+            return <Route key={index} {...rest} element={element} />;
+          })}
         </Route>
       </Routes>
     </Layout>

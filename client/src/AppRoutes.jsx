@@ -15,19 +15,14 @@ import Playlist from './components/playlist/Playlist';
 import Newplaylist from './components/playlist/Newplaylist';
 import ArtistProfile from './components/artistpage/Artistprofile';
 import Player from './components/songplayer/Player';
-import Tracking from './components/admin/Tracking';
-import Newtrack from './components/admin/Newtrack';
 
 
-const AppRoutes = [
+export const PublicRoutes = [
   {
     index: true,
     element: <Home />
   },
-  {
-    path: '/homepage',
-    element: <Homepage />
-  },
+
   {
     path: '/login',
     element: <Login />
@@ -40,66 +35,73 @@ const AppRoutes = [
     path: '/confirm',
     element: <Confirm />
   },
-
+];
+export const ListenerRoutes = [
   {
-    path: '/useredit',
-    element: <Edit />
+    path: '/listener',
+    element: <Admin />
   },
-
+  {
+    path: '/player',
+    element: <Player />
+  },
+  {
+    path: '/userlibrary',
+    element: <Library />
+  },
   {
     path: '/search',
     element: <Search />
   },
   {
-    path: '/album',
-    element: <AlbumPage />
+    path: '/newplaylist',
+    element: <Newplaylist />
   },
-
-  {
-    path: '/userlibrary',
-    element: <Library />
-  },
-
-  {
-    path: '/newalbum',
-    element: <Newalbum />
-  },
-
   {
     path: '/playlist',
     element: <Playlist />
   },
-
   {
-    path: '/newplaylist',
-    element: <Newplaylist />
+    path: '/useredit',
+    element: <Edit />
   },
-
+  {
+    path: '/homepage',
+    element: <Homepage />
+  },
+]
+export const ArtistRoutes = [
+  {
+    path: '/artist',
+    element: <Artist />
+  },
+  {
+    path: '/artist/:id',
+    element: <Artist />
+  },
   {
     path: '/artistprofile',
     element: <ArtistProfile />
   },
-
   {
-    path: '/player',
-    element: <Player />
+    path: '/album',
+    element: <AlbumPage />
   },
-
   {
-    path: '/tracking',
-    element: <Tracking />
+    path: '/newalbum',
+    element: <Newalbum />
   },
-
+]
+export const AdminRoutes = [
   {
-    path: '/newtrack',
-    element: <Newtrack />
+    path: '/admin',
+    element: <Admin />
   }
-
-
-
-
-
-
-];
-
+]
+const AppRoutes = [
+  ...PublicRoutes,
+  ...ListenerRoutes,
+  ...ArtistRoutes,
+  ...AdminRoutes
+]
 export default AppRoutes;
