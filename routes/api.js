@@ -9,7 +9,7 @@ dotenv.config();
 
 const router = express.Router();
 const SECRET_KEY = process.env.ACCESS_TOKEN_SECRET;
-const userRoles = { "Listener": 1, "": 2, "": 3 }
+const userRoles = { "Listener": 1, "Artist": 2, "Admin": 3 }
 
 router.get("/data", async (req, res) => {
   try {
@@ -26,6 +26,51 @@ router.get("/data", async (req, res) => {
 router.get("/test", (req, res) => {
   res.json([{ "test": "hello world!" }])
 });
+// Get artist profile and counts
+router.get('/artist/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const request = await new sql.Request();
+    request.input('user_id', sql.Int, id)
+    const myQuery = `SELECT A.artist_id, U.display_name,
+          (SELECT COUNT(album_id) FROM Album WHERE artist_id = A.artist_id)  album_count,
+          (SELECT COUNT(artist_id) FROM Song WHERE artist_id =a.artist_id)  song_count
+          FROM [Artist] A, [User] U WHERE A.user_id = U.user_id and A.user_id = @user_id`;
+    request.query(myQuery, async (err, result) => {
+      if (result?.recordset?.length > 0) {
+        res.json(result.recordset[0]);
+      } else {
+        res.json({ artist_id: '', artist_name: '', album_count: '', song_count: '' });
+      }
+    })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+router.get('/artist/:id/albumlatest', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const request = await new sql.Request();
+    request.input('user_id', sql.Int, id)
+    const myQuery = 'SELECT A.album_name,\
+          (Select SUM(B.plays) FROM Song B WHERE A.album_id = B.album_id ) album_streams, \
+          (Select COUNT(C.song_id) FROM [Likes] C, [Song] D WHERE C.song_id = D.song_id and D.album_id = A.album_id ) album_likes \
+          FROM [Album] A, [Artist] ART WHERE A.artist_id = ART.artist_id and ART.user_id = @user_id and A.create_at = \
+          (select max(A_NEW.create_at) from [Album] A_NEW where A_NEW.album_id = A.album_id);';
+    request.query(myQuery, async (err, result) => {
+      if (result?.recordset?.length > 0) {
+        res.json(result.recordset[0]);
+      } else {
+        res.json({ album_name: '', album_streams: 0, album_likes: 0 });
+      }
+    })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 
 // Albums Route
 router.get("/albums", async (req, res) => {
@@ -144,21 +189,21 @@ router.post('/album/insert', async (req, res) => {
 });
 
 router.post('/login', async (req, res) => {
-  const { user_name, password } = req.body;
+  const { username, password } = req.body;
   //console.log(user_name + " " + password)
-  if (!user_name || !password) {
+  if (!username || !password) {
     return res.status(400).json({ message: 'All fields are required.' });
   }
   let myQuery =
-    'SELECT user_id, password_hash, role_id FROM [User] WHERE username = @user_name;';
+    'SELECT user_id, username, password_hash, role_id FROM [User] WHERE username = @username;';
   const request = new sql.Request();
-  request.input('user_name', sql.NVarChar, user_name);
+  request.input('username', sql.NVarChar, username);
   request.query(myQuery, async (err, result) => {
 
 
-    const user = result.recordset[0];
+    const user = result?.recordset?.[0];
     if (!user) {
-      console.log(result.recordset.length)
+      console.log(result?.recordset?.length)
 
       return res.status(200).json({ token: "" });
     }
@@ -169,38 +214,19 @@ router.post('/login', async (req, res) => {
       }
       if (result) {
         console.log("Passwords match")
+        const role_id = user.role_id
         const token = jwt.sign(
-          { id: user.user_id, role: user.role_id },
+          { user_id: user.user_id, username: user.username, role_id },
           SECRET_KEY,
           { expiresIn: '1h' }
         );
-        return res.status(200).json({ token });
+        return res.json({ token, user_id: user.user_id, username: user.username, role_id });
       } else {
         console.log("Passwords do not match")
         const token = "";
         return res.status(200).json({ token: "" });
       }
     })
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    console.log("user.password_hash:\n" + user.password_hash)
-
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
-    }
-    const token = jwt.sign(
-      { id: user.user_id, role: user.role_id },
-      SECRET_KEY,
-      { expiresIn: '1h' }
-    );
-    /*
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true,
-    });
-    
-    const role_id = user.role_id
-    res.json({ token });
-    */
   });
 });
 // End /login

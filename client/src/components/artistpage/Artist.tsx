@@ -1,13 +1,15 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Play, Edit2, Loader, X, Music, LogOut } from 'lucide-react';
+import { UserContext } from '../../context/UserContext';
+import axios from '../../api/axios';
 
 // Mock API
 const mockApi = {
-  fetchArtistProfile: () => new Promise(resolve => 
+  fetchArtistProfile: () => new Promise(resolve =>
     setTimeout(() => resolve({ name: 'Tyler, Creator', albums: 2, songs: 36 }), 500)
   ),
-  fetchLatestAlbum: () => new Promise(resolve => 
+  fetchLatestAlbum: () => new Promise(resolve =>
     setTimeout(() => resolve({
       name: 'Trousers',
       streams: 600000,
@@ -17,9 +19,10 @@ const mockApi = {
 };
 
 const Artist = () => {
+  const { user } = useContext(UserContext)
   const navigate = useNavigate();
   const location = useLocation();
-  const [artistProfile, setArtistProfile] = useState({ name: '', albums: 0, songs: 0 });
+  const [artistProfile, setArtistProfile] = useState({ artist_id: '', display_name: '', album_count: 0, song_count: 0 });
   const [latestAlbum, setLatestAlbum] = useState({ name: '', streams: 0, likesSaves: 0 });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -30,12 +33,16 @@ const Artist = () => {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
+      console.log(user)
       try {
-        const [profileData, albumData] = await Promise.all([
-          mockApi.fetchArtistProfile(),
+        const [artistRes, albumData] = await Promise.all([
+          axios.get('/artist/' + user.user_id),
           mockApi.fetchLatestAlbum()
         ]);
-        setArtistProfile(profileData);
+        console.log(artistRes?.data)
+        const { display_name, album_count, song_count } = artistRes?.data;
+        const profileData = artistRes?.data;
+        setArtistProfile({ display_name, album_count, song_count });
         setLatestAlbum(albumData);
       } catch (err) {
         setError('Failed to fetch data. Please try again later.');
@@ -57,12 +64,12 @@ const Artist = () => {
   const handleLogout = () => {
     localStorage.removeItem('userToken');
     sessionStorage.clear();
-    
-    navigate('/#', { 
-      state: { 
+
+    navigate('/#', {
+      state: {
         showLogoutMessage: true,
-        message: "You've been logged out successfully" 
-      } 
+        message: "You've been logged out successfully"
+      }
     });
   };
 
@@ -135,7 +142,7 @@ const Artist = () => {
               <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile
               </Link>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
               >
@@ -180,11 +187,11 @@ const Artist = () => {
               <div className="w-32 h-32 bg-gray-700 rounded-full mr-6"></div>
               <div>
                 <p className="text-sm text-gray-400">Artist Profile</p>
-                <h2 className="text-4xl font-bold mb-2">{artistProfile.name}</h2>
-                <p className="text-sm text-gray-400 mb-4">{artistProfile.albums} Albums, {artistProfile.songs} Songs</p>
+                <h2 className="text-4xl font-bold mb-2">{artistProfile.display_name}</h2>
+                <p className="text-sm text-gray-400 mb-4">{artistProfile.album_count} Albums, {artistProfile.song_count} Songs</p>
                 <div className="flex space-x-4">
-                  <Link 
-                    to="/newalbum" 
+                  <Link
+                    to="/newalbum"
                     className="bg-[#2A2A2A] text-[#EBE7CD] px-4 py-2 rounded-full text-sm font-semibold hover:bg-[#3A3A3A] transition-colors"
                   >
                     Add New Album

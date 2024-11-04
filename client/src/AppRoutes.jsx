@@ -40,10 +40,7 @@ const AppRoutes = [
     path: '/confirm',
     element: <Confirm />
   },
-  {
-    path: '/admin',
-    element: <Admin />
-  },
+
   {
     path: '/useredit',
     element: <Edit />
@@ -53,17 +50,6 @@ const AppRoutes = [
     path: '/search',
     element: <Search />
   },
-
-  {
-    path: '/listener',
-    element: <Listener />
-  },
-
-  {
-    path: '/artist',
-    element: <Artist />
-  },
-
   {
     path: '/album',
     element: <AlbumPage />
