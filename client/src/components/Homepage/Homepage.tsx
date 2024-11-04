@@ -2,33 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Disc, X, Music, LogOut } from 'lucide-react';
 
-// Use the deployed API URL directly
-const API_URL = 'https://cougarecho-4.uc.r.appspot.com';
+const API_URL = 'http://localhost:8080';
 
 interface Artist {
   artist_id: string;
-  name: string;
-  genre?: string;
+  name: string;        
   bio?: string;
-  imageUrl?: string;
+  imageUrl?: string;   
 }
 
 interface Album {
   album_id: string;
-  title: string;
+  title: string;      
   artist_name: string;
   artist_id: string;
-  release_date?: string;
-  cover_url?: string;
+  cover_url?: string;  
 }
 
-// Updated API service to use the deployed URL
 const api = {
   fetchArtists: async (): Promise<Artist[]> => {
     try {
       const response = await fetch(`${API_URL}/api/artists`);
       if (!response.ok) throw new Error('Failed to fetch artists');
-      return await response.json();
+      const data = await response.json();
+      return data.map((artist: any) => ({
+        artist_id: artist.artist_id.toString(),
+        name: artist.name,
+        bio: artist.bio,
+        imageUrl: artist.imageUrl
+      }));
     } catch (error) {
       console.error('Error fetching artists:', error);
       return [];
@@ -39,7 +41,14 @@ const api = {
     try {
       const response = await fetch(`${API_URL}/api/albums`);
       if (!response.ok) throw new Error('Failed to fetch albums');
-      return await response.json();
+      const data = await response.json();
+      return data.map((album: any) => ({
+        album_id: album.album_id.toString(),
+        title: album.title,
+        artist_name: album.artist_name,
+        artist_id: album.artist_id.toString(),
+        cover_url: album.cover_url
+      }));
     } catch (error) {
       console.error('Error fetching albums:', error);
       return [];
@@ -135,11 +144,12 @@ const Homepage: React.FC = () => {
   };
 
   const handleArtistClick = (artistId: string) => {
-    navigate(`/artist/${artistId}`);
+    navigate(`/artistpage/${artistId}`);  // Updated to match your route structure
   };
 
   const handleAlbumClick = (albumId: string) => {
-    navigate(`/album/${albumId}`);
+    navigate(`/albumpage/${albumId}`);  // Updated to match your route structure
+    console.log('Navigating to album:', albumId); // Add this to debug
   };
 
   if (isLoading) {
