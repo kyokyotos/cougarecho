@@ -190,6 +190,7 @@ const Register = () => {
       if (response.status === 200) {
         console.log("Request successful:", response?.data);
         // Further code to handle successful response
+        navigate('/login')
       } else if (response.status === 404) {
         console.log("Resource not found");
       } else {

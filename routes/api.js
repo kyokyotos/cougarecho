@@ -1,6 +1,5 @@
 import express from "express";
 import sql from "mssql";
-import { getConnectionPool } from "../database.js"; // Use ES module import
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
@@ -13,10 +12,12 @@ const userRoles = { "Listener": 1, "Artist": 2, "Admin": 3 }
 
 router.get("/data", async (req, res) => {
   try {
-    const pool = await getConnectionPool(); // Get the connection pool
-    const result = await pool.request().query("SELECT * FROM UserRole");
-    //console.dir(result.recordset)
-    res.json(result.recordset); // Send back the result
+    const myQuery = "SELECT * FROM UserRole";
+    const request = new sql.Request();
+    request.query(myQuery, async (err, result) => {
+      res.json(result.recordset);
+    })
+
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");
@@ -25,8 +26,51 @@ router.get("/data", async (req, res) => {
 router.get("/test", (req, res) => {
   res.json([{ "test": "hello world!" }])
 });
-// Begin Josh Lewis
+// Get artist profile and counts
+router.get('/artist/:id', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const request = await new sql.Request();
+    request.input('user_id', sql.Int, id)
+    const myQuery = `SELECT A.artist_id, U.display_name,
+          (SELECT COUNT(album_id) FROM Album WHERE artist_id = A.artist_id)  album_count,
+          (SELECT COUNT(artist_id) FROM Song WHERE artist_id =a.artist_id)  song_count
+          FROM [Artist] A, [User] U WHERE A.user_id = U.user_id and A.user_id = @user_id`;
+    request.query(myQuery, async (err, result) => {
+      if (result?.recordset?.length > 0) {
+        res.json(result.recordset[0]);
+      } else {
+        res.json({ artist_id: '', artist_name: '', album_count: '', song_count: '' });
+      }
+    })
 
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+router.get('/artist/:id/albumlatest', async (req, res) => {
+  try {
+    const id = req.params.id;
+    const request = await new sql.Request();
+    request.input('user_id', sql.Int, id)
+    const myQuery = 'SELECT A.album_name,\
+          (Select SUM(B.plays) FROM Song B WHERE A.album_id = B.album_id ) album_streams, \
+          (Select COUNT(C.song_id) FROM [Likes] C, [Song] D WHERE C.song_id = D.song_id and D.album_id = A.album_id ) album_likes \
+          FROM [Album] A, [Artist] ART WHERE A.artist_id = ART.artist_id and ART.user_id = @user_id and A.create_at = \
+          (select max(A_NEW.create_at) from [Album] A_NEW where A_NEW.album_id = A.album_id);';
+    request.query(myQuery, async (err, result) => {
+      if (result?.recordset?.length > 0) {
+        res.json(result.recordset[0]);
+      } else {
+        res.json({ album_name: '', album_streams: 0, album_likes: 0 });
+      }
+    })
+
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+// Begin Josh Lewis
 // Connection is successfull
 router.post("/artist/profile/update", async (req, res) => {
   try {
@@ -109,33 +153,13 @@ router.post('/login', async (req, res) => {
           SECRET_KEY,
           { expiresIn: '1h' }
         );
-        return res.status(200).json({ token, role_id });
+        return res.json({ token, user_id: user.user_id, username: user.username, role_id });
       } else {
         console.log("Passwords do not match")
         const token = "";
         return res.status(200).json({ token: "" });
       }
     })
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    console.log("user.password_hash:\n" + user.password_hash)
-
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
-    }
-    const token = jwt.sign(
-      { id: user.user_id, role: user.role_id },
-      SECRET_KEY,
-      { expiresIn: '1h' }
-    );
-    /*
-    res.cookie('token', token, {
-      httpOnly: true,
-      secure: true,
-    });
-    
-    const role_id = user.role_id
-    res.json({ token });
-    */
   });
 });
 // End /login

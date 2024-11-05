@@ -1,28 +1,31 @@
-import React, { useRef, useState, useEffect, Ref, MutableRefObject, RefObject, Children } from 'react';
+import React, { useRef, useState, useEffect, Ref, MutableRefObject, RefObject, Children, useContext } from 'react';
 import { Link, useNavigate, useLocation, HistoryRouterProps, RouteObject, NavLinkRenderProps } from 'react-router-dom';
 import axios from '../../api/axios';
-import useAuth from '../../hooks/useAuth';
-import { Context } from 'vm';
+//import { decodeToken } from '../../api/TokenApi';
+//import { Jwt } from 'jsonwebtoken';
+import { UserContext } from '../../context/UserContext';
+import { User } from 'lucide-react';
 const LOGIN_URL = '/login';
 
 
 
 const LoginPage = () => {
-  const { setAuth }: Context = useAuth();
-
+  const { user, setUser } = useContext(UserContext);
   const navigate = useNavigate();
   const location = useLocation();
   const from = location.state?.from?.pathname || "/"
 
-  const [username, setUsername] = useState('');
+  const [username_l, setUsername_l] = useState('');
   const [password, setPassword] = useState('');
   const [success, setSuccess] = useState(false);
   const [errMsg, setErrMsg] = useState('');
   const [role_id, setRole_id] = useState();
 
+  localStorage.removeItem('token');
+  localStorage.removeItem('role_id');
   useEffect(() => {
     setErrMsg('');
-  }, [username, password])
+  }, [username_l, password])
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -30,28 +33,31 @@ const LoginPage = () => {
     // Add your login logic here
     try {
       const response = await axios.post(LOGIN_URL,
-        JSON.stringify({ username, password }),
+        JSON.stringify({ username: username_l, password }),
         {
           headers: { 'Content-Type': 'application/json' },
           withCredentials: false
         }
       );
-      console.log(JSON.stringify(response?.data));
-      const { token, role_id } = response.data;
-      localStorage.setItem('token', token);
-      switch (role_id) {
-        case 1:
-          navigate('/listener')
-          break;
-        case 2:
-          navigate('/artist')
-          break;
-        case 3:
-          navigate('/admin')
-          break;
+      if (response?.data) {
+        const { token, user_id, name, role_id } = response.data;
+        localStorage.setItem('token', token);
+        const _user = { user_id, username: username_l, role_id };
+        setUser(_user)
+        console.log(token)
+        switch (role_id) {
+          case 1:
+            navigate('/listener')
+            break;
+          case 2:
+            navigate('/artist/' + user_id)
+            break;
+          case 3:
+            navigate('/admin')
+            break;
 
+        }
       }
-
     } catch (err) {
       if (!err?.response) {
         setErrMsg('No Server Response');
@@ -68,7 +74,7 @@ const LoginPage = () => {
     //navigate('/homepage');
   };
 
-  const isLoginDisabled = username === '' || password === '';
+  const isLoginDisabled = username_l === '' || password === '';
 
   return (
     <div className="flex h-screen bg-[#0B3B24]">
@@ -85,8 +91,8 @@ const LoginPage = () => {
             <input
               type="text"
               placeholder="Username"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              value={username_l}
+              onChange={(e) => setUsername_l(e.target.value)}
               className="w-full p-4 rounded-full bg-[#165C3A] text-[#FAF5CE] placeholder-[#8BC4A9]"
             />
             <input

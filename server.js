@@ -10,7 +10,7 @@ import corsOptions from './config/corsOptions.js';
 
 dotenv.config(); // Load environment variables
 const port = process.env.PORT || 8080; // The port for the server
-const local_bool = false //process.env.ISLOCAL || false;
+const local_bool = false;//process.env.ISLOCAL || false;
 const app = express();
 if (!local_bool) {
     app.enable('trust proxy');
@@ -30,8 +30,10 @@ if (!local_bool) {
     app.get('/', function (req, res) {
         res.sendFile(path.join('client', 'dist', 'index.html'));
     });
+    app.all(/.*/, function (req, res) {
+        res.redirect('/');
+    })
 }
-
 // Connect to the database
 getConnectionPool().catch((err) => {
     console.error('Failed to connect to DB', err);

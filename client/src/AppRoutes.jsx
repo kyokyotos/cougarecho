@@ -17,15 +17,12 @@ import ArtistProfile from './components/artistpage/Artistprofile';
 import Player from './components/songplayer/Player';
 
 
-const AppRoutes = [
+export const PublicRoutes = [
   {
     index: true,
     element: <Home />
   },
-  {
-    path: '/homepage',
-    element: <Homepage />
-  },
+
   {
     path: '/login',
     element: <Login />
@@ -38,70 +35,73 @@ const AppRoutes = [
     path: '/confirm',
     element: <Confirm />
   },
+];
+export const ListenerRoutes = [
   {
-    path: '/admin',
+    path: '/listener',
     element: <Admin />
+  },
+  {
+    path: '/player',
+    element: <Player />
+  },
+  {
+    path: '/userlibrary',
+    element: <Library />
+  },
+  {
+    path: '/search',
+    element: <Search />
+  },
+  {
+    path: '/newplaylist',
+    element: <Newplaylist />
+  },
+  {
+    path: '/playlist',
+    element: <Playlist />
   },
   {
     path: '/useredit',
     element: <Edit />
   },
-
   {
-    path: '/search',
-    element: <Search />
+    path: '/homepage',
+    element: <Homepage />
   },
-
-  {
-    path: '/listener',
-    element: <Listener />
-  },
-
+]
+export const ArtistRoutes = [
   {
     path: '/artist',
     element: <Artist />
   },
-
   {
-    path: '/album',
-    element: <AlbumPage />
+    path: '/artist/:id',
+    element: <Artist />
   },
-
-  {
-    path: '/userlibrary',
-    element: <Library />
-  },
-
-  {
-    path: '/newalbum',
-    element: <Newalbum />
-  },
-
-  {
-    path: '/playlist',
-    element: <Playlist />
-  },
-
-  {
-    path: '/newplaylist',
-    element: <Newplaylist />
-  },
-
   {
     path: '/artistprofile',
     element: <ArtistProfile />
   },
-
   {
-    path: '/player',
-    element: <Player />
+    path: '/album',
+    element: <AlbumPage />
+  },
+  {
+    path: '/newalbum',
+    element: <Newalbum />
+  },
+]
+export const AdminRoutes = [
+  {
+    path: '/admin',
+    element: <Admin />
   }
-
-
-
-
-
-
-];
-
+]
+const AppRoutes = [
+  ...PublicRoutes,
+  ...ListenerRoutes,
+  ...ArtistRoutes,
+  ...AdminRoutes
+]
 export default AppRoutes;
