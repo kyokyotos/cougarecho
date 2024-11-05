@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Disc, X, Music, LogOut } from 'lucide-react';
 
-const API_URL = 'http://localhost:8080';
-
+//const API_URL = 'http://localhost:8080';
+const API_URL = 'https://cougarecho-4.uc.r.appspot.com';
 interface Artist {
   artist_id: string;
   name: string;
@@ -50,7 +50,7 @@ const api = {
       if (!token) return 'listener';
 
       const payload = JSON.parse(atob(token.split('.')[1]));
-      switch(payload.role_id) {
+      switch (payload.role_id) {
         case 1: return 'listener';
         case 2: return 'artist';
         case 3: return 'admin';
@@ -85,11 +85,11 @@ const Homepage: React.FC = () => {
 
   useEffect(() => {
     document.title = 'Homepage';
-    
+
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
-      
+
       try {
         const [artistsData, albumsData, userType] = await Promise.all([
           api.fetchArtists(),
@@ -114,12 +114,12 @@ const Homepage: React.FC = () => {
   const handleLogout = () => {
     localStorage.removeItem('userToken');
     sessionStorage.clear();
-    
-    navigate('/#', { 
-      state: { 
+
+    navigate('/#', {
+      state: {
         showLogoutMessage: true,
-        message: "You've been logged out successfully" 
-      } 
+        message: "You've been logged out successfully"
+      }
     });
   };
 
@@ -194,7 +194,7 @@ const Homepage: React.FC = () => {
               <Link to={getProfilePath()} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile ({accountType})
               </Link>
-              <button 
+              <button
                 onClick={handleLogout}
                 className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
               >
@@ -244,9 +244,9 @@ const Homepage: React.FC = () => {
                   onClick={() => handleArtistClick(artist.artist_id)}
                 >
                   {artist.imageUrl ? (
-                    <img 
-                      src={artist.imageUrl} 
-                      alt={artist.name} 
+                    <img
+                      src={artist.imageUrl}
+                      alt={artist.name}
                       className="w-1/2 h-1/2 rounded-full object-cover mb-2"
                     />
                   ) : (
@@ -269,9 +269,9 @@ const Homepage: React.FC = () => {
                   onClick={() => handleAlbumClick(album.album_id)}
                 >
                   {album.cover_url ? (
-                    <img 
-                      src={album.cover_url} 
-                      alt={album.title} 
+                    <img
+                      src={album.cover_url}
+                      alt={album.title}
                       className="w-1/2 h-1/2 object-cover mb-2 rounded"
                     />
                   ) : (

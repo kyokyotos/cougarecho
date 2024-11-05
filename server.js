@@ -30,8 +30,10 @@ if (!local_bool) {
     app.get('/', function (req, res) {
         res.sendFile(path.join('client', 'dist', 'index.html'));
     });
+    app.all(/.*/, function (req, res) {
+        res.redirect('/');
+    })
 }
-
 // Connect to the database
 getConnectionPool().catch((err) => {
     console.error('Failed to connect to DB', err);

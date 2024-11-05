@@ -3,10 +3,7 @@ import { Routes, Route } from 'react-router-dom';
 import { PublicRoutes, ListenerRoutes, ArtistRoutes, AdminRoutes } from './AppRoutes.jsx';
 import { Layout } from './components/Layout';
 import AuthRoute from './api/AuthRoute';
-import Artist from './components/artistpage/Artist';
-import Listener from './components/listener/Listener';
 import './index.css';
-import Admin from './components/admin/Admin';
 
 const App = () => {
   return (

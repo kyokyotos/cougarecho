@@ -1,6 +1,5 @@
 import express from "express";
 import sql from "mssql";
-import { getConnectionPool } from "../database.js"; // Use ES module import
 import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import dotenv from "dotenv";
@@ -13,16 +12,17 @@ const userRoles = { "Listener": 1, "Artist": 2, "Admin": 3 }
 
 router.get("/data", async (req, res) => {
   try {
-    const pool = await getConnectionPool(); // Get the connection pool
-    const result = await pool.request().query("SELECT * FROM UserRole");
-    //console.dir(result.recordset)
-    res.json(result.recordset); // Send back the result
+    const myQuery = "SELECT * FROM UserRole";
+    const request = new sql.Request();
+    request.query(myQuery, async (err, result) => {
+      res.json(result.recordset);
+    })
+
   } catch (err) {
     console.error(err);
     res.status(500).send("Server error");
   }
 });
-
 router.get("/test", (req, res) => {
   res.json([{ "test": "hello world!" }])
 });
@@ -70,73 +70,7 @@ router.get('/artist/:id/albumlatest', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
-
-// Albums Route
-router.get("/albums", async (req, res) => {
-    try {
-        const pool = await getConnectionPool();
-        const query = `
-            SELECT TOP 3
-                a.album_id,
-                a.album_name as title,
-                ar.artist_id,
-                ar.country as artist_name,
-                a.path as cover_url
-            FROM Album a
-            JOIN Artist ar ON a.artist_id = ar.artist_id
-            ORDER BY a.create_at DESC
-        `;
-        
-        const result = await pool.request().query(query);
-        const albums = result.recordset.map(album => ({
-            album_id: album.album_id.toString(),
-            title: album.title,
-            artist_name: album.artist_name,
-            artist_id: album.artist_id.toString(),
-            cover_url: album.cover_url
-        }));
-
-        res.json(albums);
-    } catch (error) {
-        console.error('Error fetching albums:', error);
-        res.status(500).json({ message: 'Error fetching albums' });
-    }
-});
-
-// Artists Route
-router.get("/artists", async (req, res) => {
-    try {
-        const pool = await getConnectionPool();
-        const query = `
-            SELECT TOP 4
-                artist_id,
-                country,
-                bio,
-                user_id,
-                created_at,
-                path as imageUrl
-            FROM Artist
-            ORDER BY created_at DESC
-        `;
-        
-        const result = await pool.request().query(query);
-        const artists = result.recordset.map(artist => ({
-            artist_id: artist.artist_id.toString(),
-            name: artist.country, // Using country as name since that's what we have
-            bio: artist.bio,
-            imageUrl: artist.imageUrl
-        }));
-
-        res.json(artists);
-    } catch (error) {
-        console.error('Error fetching artists:', error);
-        res.status(500).json({ message: 'Error fetching artists' });
-    }
-});
-
 // Begin Josh Lewis
-
 // Connection is successfull
 router.post("/artist/profile/update", async (req, res) => {
   try {
@@ -157,7 +91,6 @@ router.post("/artist/profile/update", async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
-
 // Connection is successfull
 router.post('/album/insert', async (req, res) => {
   try {
