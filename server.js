@@ -2,8 +2,6 @@ import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import apiRoutes from './routes/api.js'; // Import other routes if you have them
-import userRoutes from './routes/user.js'; // Import the user routes
-import songRoutes from './routes/songs.js';
 import path from 'path';
 import { getConnectionPool } from './database.js';
 import corsOptions from './config/corsOptions.js';
@@ -21,8 +19,6 @@ if (!local_bool) {
 app.use(express.json()); // Middleware to parse incoming JSON requests
 
 app.use('/api', apiRoutes);
-app.use('/api/users', userRoutes); // Register the users route
-app.use('/api/songs', songRoutes); // Use /api/songs route for song operations
 if (!local_bool) {
     // Deployment settings
     app.use(express.static(path.join('client/dist')));
