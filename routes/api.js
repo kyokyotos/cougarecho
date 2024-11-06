@@ -224,4 +224,60 @@ router.post('/register', async (req, res) => {
 // End /register
 
 // End Josh Lewis
+
+
+//Thinh Bui
+
+//get all user
+router.get('/users', async (req, res) => {
+  try {
+    const pool = await sql.connect('your-database-connection-string');
+    const result = await pool.request().query('SELECT * FROM [dbo].[User]');
+    res.status(200).json(result.recordset);
+  } catch (error) {
+    console.error('Error fetching users:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+//search for songs and artist name
+
+router.get('/songs/search', async (req, res) => {
+  const { keyword = '' } = req.query;
+
+  try {
+    const pool = await sql.connect('your-database-connection-string');
+    const request = pool.request();
+    request.input('keyword', sql.NVarChar, `%${keyword}%`); // Use wildcards to match the keyword
+
+    const myQuery = `
+      SELECT 
+          s.song_id, 
+          s.song_name, 
+          s.duration, 
+          s.plays, 
+          s.created_at, 
+          s.isAvailable, 
+          a.album_name, 
+          u.display_name AS artist_name, 
+          g.genre_name 
+      FROM [dbo].[Song] s
+      JOIN [dbo].[Artist] ar ON s.artist_id = ar.artist_id
+      JOIN [dbo].[User] u ON ar.user_id = u.user_id
+      JOIN [dbo].[Album] a ON s.album_id = a.album_id
+      LEFT JOIN [dbo].[Genre] g ON s.genre_id = g.genre_id
+      WHERE s.song_name LIKE @keyword 
+         OR u.display_name LIKE @keyword 
+         OR u.first_name + ' ' + u.last_name LIKE @keyword`;
+
+    const result = await request.query(myQuery);
+    res.status(200).json(result.recordset);
+
+  } catch (error) {
+    console.error('Error fetching songs or artists:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+//End Thinh Bui
 export default router;
