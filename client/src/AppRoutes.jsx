@@ -15,6 +15,8 @@ import Playlist from './components/playlist/Playlist';
 import Newplaylist from './components/playlist/Newplaylist';
 import ArtistProfile from './components/artistpage/Artistprofile';
 import Player from './components/songplayer/Player';
+import Tracking from './components/admin/Tracking';
+import Newtrack from './components/admin/Newtrack';
 
 
 export const PublicRoutes = [
@@ -35,11 +37,25 @@ export const PublicRoutes = [
     path: '/confirm',
     element: <Confirm />
   },
-];
-export const ListenerRoutes = [
+
   {
-    path: '/listener',
-    element: <Admin />
+    path: '/tracking',
+    element: <Tracking />
+  },
+
+  {
+    path: '/newtrack',
+    element: <Newtrack />
+  },
+
+  {
+    path: '/artistprofile',
+    element: <ArtistProfile />
+  },
+
+  {
+    path: '/album',
+    element: <AlbumPage />
   },
   {
     path: '/player',
@@ -69,6 +85,19 @@ export const ListenerRoutes = [
     path: '/homepage',
     element: <Homepage />
   },
+
+
+
+];
+export const ListenerRoutes = [
+
+  {
+    path: '/listener',
+    element: <Listener />
+  },
+
+ 
+
 ]
 export const ArtistRoutes = [
   {
@@ -79,24 +108,21 @@ export const ArtistRoutes = [
     path: '/artist/:id',
     element: <Artist />
   },
-  {
-    path: '/artistprofile',
-    element: <ArtistProfile />
-  },
-  {
-    path: '/album',
-    element: <AlbumPage />
-  },
+
+
   {
     path: '/newalbum',
     element: <Newalbum />
   },
 ]
 export const AdminRoutes = [
+
   {
     path: '/admin',
     element: <Admin />
-  }
+  },
+
+
 ]
 const AppRoutes = [
   ...PublicRoutes,
