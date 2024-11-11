@@ -52,7 +52,7 @@ const SearchPage: React.FC = () => {
     const token = localStorage.getItem('token') || '';  // Retrieve token from local storage
 
     try {
-      const response = await axios.get(`http://localhost:8080/api/songs/search`, {
+      const response = await axios.get(`/songs/search`, {
         params: { keyword: searchKeyword },
         headers: {
           'Authorization': `Bearer ${token}`,
