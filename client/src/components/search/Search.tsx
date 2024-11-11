@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import axios from '../../api/axios';
 import { Search, Menu, PlusCircle, User, Play } from 'lucide-react';
-import MusicPlayer from '../../songplayer/Player';
+import MusicPlayer from '../../components/songplayer/Player';
 
 interface DBSong {
   song_id: string;
