@@ -78,6 +78,23 @@ export const PublicRoutes = [
     element: <Playlist />
   },
   {
+    path: '/player',
+    element: <Player />
+  },
+  {
+    path: '/userlibrary',
+    element: <Library />
+  },
+  {
+    path: '/homepage',
+    element: <Homepage />
+  },
+
+  {
+    path: '/playlist',
+    element: <Playlist />
+  },
+  {
     path: '/useredit',
     element: <Edit />
   },
