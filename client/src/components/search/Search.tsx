@@ -1,31 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useSearchParams, useNavigate, Link } from 'react-router-dom';
 import axios from '../../api/axios';
-import { Search, Menu, PlusCircle, User, Play } from 'lucide-react';
+import { Search, Home, Settings, Menu, PlusCircle, User, X, Music, LogOut, Play } from 'lucide-react';
 import MusicPlayer from '../../components/songplayer/Player';
-
-interface DBSong {
-  song_id: string;
-  path: string;
-  song_name: string;
-  duration: string;
-  plays: number;
-  album_id: string;
-  artist_id: string;
-  genre_id: string;
-  created_at: string;
-  isAvailable: boolean;
-}
-
-interface DBArtist {
-  artist_id: string;
-  artist_name: string;
-  country?: string;
-  bio?: string;
-  created_at: string;
-  user_id: string;
-  isVerified: boolean;
-}
 
 interface SearchResultItem {
   song_id: string;
@@ -41,7 +18,7 @@ interface SearchResultItem {
 
 interface SearchResults {
   songs: SearchResultItem[];
-  artists: DBArtist[];
+  artists: [];
 }
 
 const SearchPage: React.FC = () => {
@@ -66,10 +43,6 @@ const SearchPage: React.FC = () => {
     fetchUserId();
   }, []);
 
-  const printDebugInfo = (message: string, data: any) => {
-    console.log(message, data);
-  };
-
   const handleSearch = async () => {
     if (searchKeyword.trim() === '') {
       setResults({ songs: [], artists: [] });
@@ -88,27 +61,18 @@ const SearchPage: React.FC = () => {
       });
 
       setResults({
-        songs: response.data,  // Use response data directly for songs
-        artists: []            // Assuming no artist data is fetched in this version
+        songs: response.data,
+        artists: []
       });
-      printDebugInfo("Search results:", response.data);  // Log the results for debugging
-      setErrMsg(null);  // Clear error message if request is successful
+      setErrMsg(null);
 
     } catch (error: any) {
       console.error('Error performing search:', error);
-      if (error.response) {
-        console.log('Response status:', error.response.status);
-        console.log('Response headers:', error.response.headers);
-        console.log('Response data:', error.response.data);
-
-        if (error.response.status === 401) {
-          setErrMsg('Unauthorized: Please log in again.');
-          navigate('/login');
-        } else {
-          setErrMsg('Failed to fetch search results.');
-        }
+      if (error.response && error.response.status === 401) {
+        setErrMsg('Unauthorized: Please log in again.');
+        navigate('/login');
       } else {
-        setErrMsg('No Server Response');
+        setErrMsg('Failed to fetch search results.');
       }
     }
   };
@@ -128,28 +92,61 @@ const SearchPage: React.FC = () => {
     return `${minutes}:${seconds.padStart(2, '0')}`;
   };
 
-  const handleSongPlay = (song: SearchResultItem) => {
-    setCurrentSong(song);
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    navigate('/#');
+  };
+
+  const handleCreatePlaylist = () => {
+    navigate('/newplaylist');
   };
 
   return (
-    <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans relative">
+    <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans">
       {/* Sidebar */}
       <div className={`w-16 flex flex-col items-center py-4 bg-black border-r border-gray-800 transition-all duration-300 ease-in-out ${isMenuExpanded ? 'w-64' : 'w-16'}`}>
         <div className="flex flex-col items-center space-y-4 mb-8">
           <button onClick={() => setIsMenuExpanded(!isMenuExpanded)} className="text-[#1ED760] hover:text-white" aria-label="Menu">
-            <Menu className="w-6 h-6" />
+            {isMenuExpanded ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
         </div>
+        <div className="flex-grow"></div>
         <div className="mt-auto flex flex-col items-center space-y-4 mb-4">
-          <button className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-white" aria-label="Add">
+          <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
             <PlusCircle className="w-6 h-6" />
           </button>
-          <Link to="/useredit" className="text-[#1ED760] hover:text-white">
+          <Link to="/useredit" aria-label="User Profile" className="text-[#1ED760] hover:text-white">
             <User className="w-6 h-6" />
           </Link>
         </div>
       </div>
+
+      {/* Expandable Menu */}
+      {isMenuExpanded && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+          <div className="bg-[#121212] w-64 h-full p-4">
+            <button onClick={() => setIsMenuExpanded(false)} className="mb-8 text-[#1ED760]">
+              <X className="w-6 h-6" />
+            </button>
+            <nav>
+              <ul className="space-y-4">
+                <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
+                <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
+                <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
+                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center w-full"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
+              </ul>
+            </nav>
+            <div className="mt-auto">
+              <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+                <User className="w-5 h-5 mr-3" /> Profile
+              </Link>
+              <button onClick={handleLogout} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full">
+                <LogOut className="w-5 h-5 mr-3" /> Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Main content */}
       <div className="flex-1 flex flex-col p-8 overflow-y-auto pb-20">
@@ -178,7 +175,7 @@ const SearchPage: React.FC = () => {
                     <div
                       key={song.song_id}
                       className="bg-[#2A2A2A] p-3 rounded-lg flex items-center hover:bg-[#3A3A3A] transition-colors"
-                      onClick={() => handleSongPlay(song)}
+                      onClick={() => setCurrentSong(song)}
                     >
                       <Play className="w-4 h-4 mr-3 text-gray-400" />
                       <div className="flex-grow">
