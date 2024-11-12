@@ -2,66 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Disc, X, Music, LogOut } from 'lucide-react';
 
-//const API_URL = 'http://localhost:8080';
-const API_URL = 'https://cougarecho-4.uc.r.appspot.com';
+const API_URL = 'http://localhost:8080/api';
+
 interface Artist {
   artist_id: string;
-  name: string;
-  bio?: string;
-  imageUrl?: string;
+  name: string; // This will be mapped from artist_name
 }
 
 interface Album {
   album_id: string;
-  title: string;
+  title: string; // This will be mapped from album_name
   artist_name: string;
   artist_id: string;
-  cover_url?: string;
 }
-
-const api = {
-  fetchArtists: async (): Promise<Artist[]> => {
-    try {
-      const response = await fetch(`${API_URL}/api/artists`);
-      if (!response.ok) throw new Error('Failed to fetch artists');
-      const artists = await response.json();
-      return artists;
-    } catch (error) {
-      console.error('Error fetching artists:', error);
-      return [];
-    }
-  },
-
-  fetchAlbums: async (): Promise<Album[]> => {
-    try {
-      const response = await fetch(`${API_URL}/api/albums`);
-      if (!response.ok) throw new Error('Failed to fetch albums');
-      const albums = await response.json();
-      return albums;
-    } catch (error) {
-      console.error('Error fetching albums:', error);
-      return [];
-    }
-  },
-
-  fetchUserType: async (): Promise<string> => {
-    try {
-      const token = localStorage.getItem('userToken');
-      if (!token) return 'listener';
-
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      switch (payload.role_id) {
-        case 1: return 'listener';
-        case 2: return 'artist';
-        case 3: return 'admin';
-        default: return 'listener';
-      }
-    } catch (error) {
-      console.error('Error fetching user type:', error);
-      return 'listener';
-    }
-  }
-};
 
 const Homepage: React.FC = () => {
   const navigate = useNavigate();
@@ -71,6 +24,66 @@ const Homepage: React.FC = () => {
   const [albums, setAlbums] = useState<Album[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+
+  useEffect(() => {
+    document.title = 'Homepage';
+    const fetchData = async () => {
+      setIsLoading(true);
+      setError(null);
+  
+      try {
+        // Get artists
+        const artistsResponse = await fetch(`${API_URL}/artists`);
+        if (artistsResponse.ok) {
+          const artistsData = await artistsResponse.json();
+          const artistList = artistsData.map(artist => ({
+            artist_id: artist.artist_id,
+            name: artist.artist_name || ''
+          }));
+          console.log('Top 3 Artists:', artistList);
+          setArtists(artistList);
+        }
+  
+        // Get albums
+        const albumsResponse = await fetch(`${API_URL}/albums`);
+        if (albumsResponse.ok) {
+          const albumsData = await albumsResponse.json();
+          const albumList = albumsData.map(album => ({
+            album_id: album.album_id,
+            title: album.album_name,
+            artist_name: album.artist_name,
+            artist_id: album.artist_id
+          }));
+          console.log('Top 3 Albums:', albumList);
+          setAlbums(albumList);
+        }
+  
+        // Get user type from token
+        const token = localStorage.getItem('userToken');
+        if (token) {
+          try {
+            const payload = JSON.parse(atob(token.split('.')[1]));
+            const userType = payload.role_id === 1 ? 'listener' 
+                          : payload.role_id === 2 ? 'artist'
+                          : payload.role_id === 3 ? 'admin'
+                          : 'listener';
+            setAccountType(userType);
+          } catch (tokenError) {
+            console.error('Error parsing token:', tokenError);
+            setAccountType('listener');
+          }
+        }
+      } catch (err) {
+        console.error('Error loading homepage data:', err);
+        setError('Failed to load content. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchData();
+  }, []);
 
   const getProfilePath = () => {
     switch (accountType) {
@@ -83,43 +96,15 @@ const Homepage: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    document.title = 'Homepage';
-
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const [artistsData, albumsData, userType] = await Promise.all([
-          api.fetchArtists(),
-          api.fetchAlbums(),
-          api.fetchUserType()
-        ]);
-
-        setArtists(artistsData);
-        setAlbums(albumsData);
-        setAccountType(userType);
-      } catch (err) {
-        setError('Failed to load content. Please try again later.');
-        console.error('Error loading homepage data:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchData();
-  }, []);
-
   const handleLogout = () => {
     localStorage.removeItem('userToken');
     sessionStorage.clear();
-
-    navigate('/#', {
-      state: {
+    
+    navigate('/#', { 
+      state: { 
         showLogoutMessage: true,
-        message: "You've been logged out successfully"
-      }
+        message: "You've been logged out successfully" 
+      } 
     });
   };
 
@@ -194,7 +179,7 @@ const Homepage: React.FC = () => {
               <Link to={getProfilePath()} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
                 <User className="w-5 h-5 mr-3" /> Profile ({accountType})
               </Link>
-              <button
+              <button 
                 onClick={handleLogout}
                 className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
               >
@@ -243,15 +228,7 @@ const Homepage: React.FC = () => {
                   className="w-full aspect-square bg-[#2A2A2A] rounded-full flex flex-col items-center justify-center hover:bg-[#3A3A3A] transition-colors"
                   onClick={() => handleArtistClick(artist.artist_id)}
                 >
-                  {artist.imageUrl ? (
-                    <img
-                      src={artist.imageUrl}
-                      alt={artist.name}
-                      className="w-1/2 h-1/2 rounded-full object-cover mb-2"
-                    />
-                  ) : (
-                    <User className="w-1/2 h-1/2 text-gray-400 mb-2" />
-                  )}
+                  <User className="w-1/2 h-1/2 text-gray-400 mb-2" />
                   <span className="text-sm text-center px-2">{artist.name}</span>
                 </button>
               ))}
@@ -268,15 +245,7 @@ const Homepage: React.FC = () => {
                   className="w-full aspect-square bg-[#2A2A2A] rounded-lg hover:bg-[#3A3A3A] transition-colors flex flex-col items-center justify-center p-4"
                   onClick={() => handleAlbumClick(album.album_id)}
                 >
-                  {album.cover_url ? (
-                    <img
-                      src={album.cover_url}
-                      alt={album.title}
-                      className="w-1/2 h-1/2 object-cover mb-2 rounded"
-                    />
-                  ) : (
-                    <Disc className="w-1/2 h-1/2 text-gray-400 mb-2" />
-                  )}
+                  <Disc className="w-1/2 h-1/2 text-gray-400 mb-2" />
                   <span className="text-sm font-semibold text-center">{album.title}</span>
                   <span className="text-xs text-gray-400 text-center mt-1">{album.artist_name}</span>
                 </button>

@@ -103,6 +103,15 @@ export const PublicRoutes = [
     element: <Homepage />
   },
 
+  {
+    path: '/album/:id',  //  to match  album route pattern
+    element: <AlbumPage />
+  },
+  {
+    path: '/artistprofile/:id',  // to match  artist profile route pattern
+    element: <ArtistProfile />
+  },
+
 
 
 ];
