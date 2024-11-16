@@ -22,7 +22,7 @@ const CreateAdmin = () => {
       return "Password must be at least 8 characters long";
     }
     if (!hasCapital) {
-      return "Password must contain at least one capital letter";
+      return "Password must contain at least one capital letter!";
     }
     if (!hasNumber) {
       return "Password must contain at least one number";

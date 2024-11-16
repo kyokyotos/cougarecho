@@ -217,7 +217,7 @@ const Homepage: React.FC = () => {
         <main className="flex-1 p-8 overflow-y-auto">
 
           <section>
-            <h2 className="text-2xl font-bold mb-4">Explore New Albums</h2>
+            <h2 className="text-2xl font-bold mb-4">Explore The New Albums</h2>
             <div className="grid grid-cols-3 gap-4">
               {albums.map((album) => (
                 <button
