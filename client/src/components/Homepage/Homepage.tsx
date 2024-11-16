@@ -1,17 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Disc, X, Music, LogOut } from 'lucide-react';
-import { BASE_URL2 } from '../../api/axios';
-const API_URL = BASE_URL2;
+
+// API URL Configuration
+const getApiUrl = (): string => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:8080/api';
+  }
+  return 'https://cougarecho-4.uc.r.appspot.com/api';
+};
+
+const API_URL = getApiUrl();
 
 interface Artist {
   artist_id: string;
-  name: string; // This will be mapped from artist_name
+  name: string;
 }
 
 interface Album {
   album_id: string;
-  title: string; // This will be mapped from album_name
+  title: string;
   artist_name: string;
   artist_id: string;
 }
@@ -25,26 +33,15 @@ const Homepage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-
   useEffect(() => {
     document.title = 'Homepage';
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
 
-      try {
-        // Get artists
-        const artistsResponse = await fetch(`${API_URL}/artists`);
-        if (artistsResponse.ok) {
-          const artistsData = await artistsResponse.json();
-          const artistList = artistsData.map(artist => ({
-            artist_id: artist.artist_id,
-            name: artist.artist_name || ''
-          }));
-          console.log('Top 3 Artists:', artistList);
-          setArtists(artistList);
-        }
-
+      try {  
+        
+  
         // Get albums
         const albumsResponse = await fetch(`${API_URL}/albums`);
         if (albumsResponse.ok) {
@@ -55,7 +52,7 @@ const Homepage: React.FC = () => {
             artist_name: album.artist_name,
             artist_id: album.artist_id
           }));
-          console.log('Top 3 Albums:', albumList);
+          console.log('Top 6 Albums:', albumList);
           setAlbums(albumList);
         }
 
@@ -218,22 +215,6 @@ const Homepage: React.FC = () => {
 
         {/* Main Content */}
         <main className="flex-1 p-8 overflow-y-auto">
-          <section className="mb-8">
-            <h2 className="text-2xl font-bold mb-4">Explore New Artists</h2>
-            <div className="grid grid-cols-4 gap-4">
-              {artists.map((artist) => (
-                <button
-                  key={artist.artist_id}
-                  aria-label={`Explore ${artist.name}`}
-                  className="w-full aspect-square bg-[#2A2A2A] rounded-full flex flex-col items-center justify-center hover:bg-[#3A3A3A] transition-colors"
-                  onClick={() => handleArtistClick(artist.artist_id)}
-                >
-                  <User className="w-1/2 h-1/2 text-gray-400 mb-2" />
-                  <span className="text-sm text-center px-2">{artist.name}</span>
-                </button>
-              ))}
-            </div>
-          </section>
 
           <section>
             <h2 className="text-2xl font-bold mb-4">Explore New Albums</h2>
