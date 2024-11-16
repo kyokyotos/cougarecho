@@ -1,16 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Disc, X, Music, LogOut } from 'lucide-react';
-
-// API URL Configuration
-const getApiUrl = (): string => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:8080/api';
-  }
-  return 'https://cougarecho-4.uc.r.appspot.com/api';
-};
-
-const API_URL = getApiUrl();
+import axios from '../../api/axios';
 
 interface Artist {
   artist_id: string;
@@ -39,13 +30,24 @@ const Homepage: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      try {  
-        
-  
+      try {
+        // Get artists
+        const artistsResponse = await axios.get(`/artists`);
+        if (artistsResponse?.data) {
+          const artistsData = await artistsResponse.data
+          console.log(artistsData)
+          const artistList = artistsData.map(artist => ({
+            artist_id: artist.artist_id,
+            name: artist.artist_name || ''
+          }));
+          console.log('Top 3 Artists:', artistList);
+          setArtists(artistList);
+        }
+
         // Get albums
-        const albumsResponse = await fetch(`${API_URL}/albums`);
-        if (albumsResponse.ok) {
-          const albumsData = await albumsResponse.json();
+        const albumsResponse = await axios(`/albums`);
+        if (albumsResponse?.data) {
+          const albumsData = await albumsResponse?.data;
           const albumList = albumsData.map(album => ({
             album_id: album.album_id,
             title: album.album_name,
