@@ -17,6 +17,7 @@ import ArtistProfile from './components/artistpage/Artistprofile';
 import Player from './components/songplayer/Player';
 import Tracking from './components/admin/Tracking';
 import Newtrack from './components/admin/Newtrack';
+import Makeadmin from './components/admin/Makeadmin';
 
 
 export const PublicRoutes = [
@@ -103,6 +104,17 @@ export const PublicRoutes = [
     element: <Homepage />
   },
 
+  
+  {
+    path: '/admin',
+    element: <Admin />
+  },
+
+  {
+    path: '/makeadmin',
+    element: <Makeadmin />
+  },
+
 
 
 ];
@@ -134,10 +146,7 @@ export const ArtistRoutes = [
 ]
 export const AdminRoutes = [
 
-  {
-    path: '/admin',
-    element: <Admin />
-  },
+
 
 
 ]
