@@ -69,11 +69,12 @@ const Listener = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      console.log("BEGIN fetchData Listener")
+
       try {
         const response = await axios.get('/listener/' + user.user_id);
         const profileData = { name: response?.data?.display_name, playlists: response?.data?.playlists }
         console.log(profileData)
+
         setUserProfile({ ...userProfile, ...profileData });
 
         const response2 = await axios.get('/album/playcount/3');
@@ -95,6 +96,7 @@ const Listener = () => {
           );
         })
         //console.log(topAlbums)
+
       } catch (err) {
         setError('Failed to fetch data. Please try again later.');
         console.error('Error fetching data:', err);

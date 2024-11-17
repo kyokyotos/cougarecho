@@ -31,7 +31,6 @@ router.get("/test", (req, res) => {
   res.json([{ "test": "hello world!" }])
 });
 // Begin Josh Lewis
-
 router.get('/listener/:id', async (req, res) => {
   try {
     const user_id = req.params.id;
