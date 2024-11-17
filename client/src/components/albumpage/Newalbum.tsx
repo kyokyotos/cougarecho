@@ -48,6 +48,7 @@ const UploadPage: React.FC = () => {
       console.log('Sending album');
       const data = new FormData();
       const album_info = { album_name: albumName, user_id: user.id };
+
     } catch (error) {
       console.error('Registration request failed:', error);
     }
@@ -78,6 +79,7 @@ const UploadPage: React.FC = () => {
       setShowSongModal(false);
     }
   };
+
 
   const handleUpload = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();

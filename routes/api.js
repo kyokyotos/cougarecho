@@ -726,4 +726,41 @@ router.delete('/user/delete/:user_id', async (req, res) => {
 
 
 
+=======
+  } catch (err) {
+    console.error('Route error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get top 3 albums
+router.get("/albums", async (req, res) => {
+  try {
+    const request = new sql.Request();
+    const query = `
+      SELECT TOP 3
+        a.album_id,
+        a.album_name,
+        a.artist_id,
+        art.artist_name,
+        a.album_cover
+      FROM [Album] a
+      INNER JOIN [Artist] art ON a.artist_id = art.artist_id
+      WHERE a.album_name IS NOT NULL
+      ORDER BY a.create_at DESC
+    `;
+
+    request.query(query, (err, result) => {
+      if (err) {
+        console.error('Database query error:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(result.recordset || []);
+    });
+  } catch (err) {
+    console.error('Route error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+//End Homepage: Yeni
 export default router;
