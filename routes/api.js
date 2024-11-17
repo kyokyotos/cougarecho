@@ -181,9 +181,14 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // Create 'uploads' directory if it doesn't exist
-const uploadDir = path.join('/tmp/uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir);
+const uploadDir = path.join(process.cwd(), 'uploads');
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.error('Error creating upload directory:', err);
+  // Handle the error appropriately
 }
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -203,16 +208,57 @@ const album_upload = upload.fields([
 ])
 // Begin /album-upload
 router.post("/song-insert", upload.single('song'), async function (req, res, next) {
-
   console.log(req?.body)
   const user_id = req?.body?.user_id
   const file = req?.file;
   const album_id = req?.body?.album_id
-  const song_name = 'NO-NAME';
+  const song_name = req.body.song_name || 'Untitled'; // Add this line to get song name
   const isAvailable = true;
-  console.log("user_id: ", user_id, ", file", file)
+  
+  console.log("user_id: ", user_id, ", file", file, ", song_name: ", song_name)
+  
   if (!file || !user_id || !album_id) {
-    return res.status(400).json({ error: "File upload failed. Neccesary fields not received." });
+    return res.status(400).json({ error: "File upload failed. Necessary fields not received." });
+  }
+
+  try {
+    const request1 = new sql.Request();
+    request1.input('song_name', sql.VarChar, song_name); // Use the provided song name
+    request1.input('user_id', sql.Int, user_id);
+    request1.input('album_id', sql.Int, album_id);
+    request1.input('isAvailable', sql.Bit, isAvailable);
+
+    console.log("Starting query1....")
+    const result1 = await request1.query(
+      'DECLARE @InsertedSongs TABLE (id INT); \
+      INSERT INTO [Song] (song_name, album_id, artist_id, created_at, isAvailable) \
+      OUTPUT inserted.song_id INTO @InsertedSongs \
+      VALUES( @song_name, @album_id, (SELECT A.artist_id FROM [Artist] A WHERE A.user_id = @user_id), GETDATE(), @isAvailable); \
+      SELECT * FROM @InsertedSongs;');
+    
+    console.log("Finished query1")
+    console.log(result1?.recordset?.[0].id)
+    const song_id = result1?.recordset?.[0].id
+    if (!song_id) {
+      return res.status(500).json({ message: "Error inserting song record" });
+    }
+
+    const filePath = file.path;
+    const fileBuffer = fs.readFileSync(filePath);
+
+    const request2 = new sql.Request();
+    request2.input('song_id', sql.Int, song_id);
+    request2.input('file_name', sql.VarChar, file.originalname);
+    request2.input('song_file', sql.VarBinary(sql.MAX), fileBuffer)
+    request2.query(`INSERT INTO [SongFile] (song_id, song_file, file_name)
+              VALUES (@song_id, @song_file, @file_name)`);
+    
+    fs.unlinkSync(filePath);
+    console.log("Song inserted successfully with name:", song_name)
+    return res.status(200).json({ message: "Success", song_id, song_name })
+  } catch (err) {
+    console.log("ERROR: ", err.message)
+    return res.status(500).json({ message: err.message })
   }
   //const transaction = new sql.Transaction()
   //transaction.begin(err => {
@@ -764,6 +810,226 @@ router.get("/artists", async (req, res) => {
       }
       res.json(result.recordset || []);
     });
+  } catch (err) {
+    console.error('Route error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+
+// Get top 3 albums
+router.get("/albums", async (req, res) => {
+  try {
+    const request = new sql.Request();
+    const query = `
+      SELECT TOP 6
+        a.album_id,
+        a.album_name,
+        a.artist_id,
+        art.artist_name,
+        a.album_cover
+      FROM [Album] a
+      INNER JOIN [Artist] art ON a.artist_id = art.artist_id
+      WHERE a.album_name IS NOT NULL
+      ORDER BY a.create_at DESC
+    `;
+
+    request.query(query, (err, result) => {
+      if (err) {
+        console.error('Database query error:', err);
+        return res.status(500).json({ error: err.message });
+      }
+      res.json(result.recordset || []);
+    });
+  } catch (err) {
+    console.error('Route error:', err);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+});
+//End Homepage: Yeni
+
+
+
+//edit start Yeni
+
+// Get user profile with display name and username
+router.get('/user/profile/:user_id', async (req, res) => {
+  try {
+    const user_id = req.params.user_id;
+    const request = new sql.Request();
+    request.input('user_id', sql.Int, user_id);
+    
+    const myQuery = `
+      SELECT U.user_id, U.username, U.display_name, U.role_id,
+        (SELECT COUNT(*) FROM [Playlist] WHERE user_id = U.user_id) as playlist_count
+      FROM [User] U 
+      WHERE U.user_id = @user_id`;
+
+    request.query(myQuery, (err, result) => {
+      if (err || !result?.recordset?.[0]) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+      res.json(result.recordset[0]);
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update display name
+router.put('/user/displayname', async (req, res) => {
+  try {
+    const { user_id, display_name } = req.body;
+    
+    if (!display_name?.trim()) {
+      return res.status(400).json({ error: 'Display name cannot be empty' });
+    }
+
+    const request = new sql.Request();
+    request.input('user_id', sql.Int, user_id);
+    request.input('display_name', sql.NVarChar, display_name);
+
+    const transaction = new sql.Transaction();
+    await transaction.begin();
+
+    try {
+      // Update display name in User table
+      await request.query(`
+        UPDATE [User] 
+        SET display_name = @display_name 
+        WHERE user_id = @user_id`);
+
+      // Update display name in related Artist records if exists
+      await request.query(`
+        UPDATE [Artist]
+        SET artist_name = @display_name
+        WHERE user_id = @user_id`);
+
+      await transaction.commit();
+      res.json({ success: true, message: 'Display name updated successfully' });
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Update username
+router.put('/user/username', async (req, res) => {
+  try {
+    const { user_id, old_username, new_username } = req.body;
+
+    if (!new_username?.trim()) {
+      return res.status(400).json({ error: 'Username cannot be empty' });
+    }
+
+    const request = new sql.Request();
+    request.input('user_id', sql.Int, user_id);
+    request.input('old_username', sql.NVarChar, old_username);
+    request.input('new_username', sql.NVarChar, new_username);
+
+    // Check if old username matches
+    const userCheck = await request.query(
+      'SELECT username FROM [User] WHERE user_id = @user_id'
+    );
+
+    if (!userCheck.recordset[0] || userCheck.recordset[0].username !== old_username) {
+      return res.status(400).json({ error: 'Current username is incorrect' });
+    }
+
+    // Check if new username is already taken
+    const usernameCheck = await request.query(
+      'SELECT user_id FROM [User] WHERE username = @new_username AND user_id != @user_id'
+    );
+
+    if (usernameCheck.recordset.length > 0) {
+      return res.status(400).json({ error: 'Username is already taken' });
+    }
+
+    const transaction = new sql.Transaction();
+    await transaction.begin();
+
+    try {
+      // Update username
+      await request.query(`
+        UPDATE [User]
+        SET username = @new_username
+        WHERE user_id = @user_id`);
+
+      await transaction.commit();
+      res.json({ success: true, message: 'Username updated successfully' });
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// Delete account
+router.delete('/user/delete/:user_id', async (req, res) => {
+  try {
+    const user_id = req.params.user_id;
+    const request = new sql.Request();
+    request.input('user_id', sql.Int, user_id);
+
+    const transaction = new sql.Transaction();
+    await transaction.begin();
+
+    try {
+      // Delete user's playlist songs
+      await request.query(`
+        DELETE FROM [PlaylistSong]
+        WHERE playlist_id IN (SELECT playlist_id FROM [Playlist] WHERE user_id = @user_id)`);
+
+      // Delete user's playlists
+      await request.query(`
+        DELETE FROM [Playlist]
+        WHERE user_id = @user_id`);
+
+      // Delete user's song likes
+      await request.query(`
+        DELETE FROM [Likes]
+        WHERE user_id = @user_id`);
+
+      // Delete songs if user is an artist
+      await request.query(`
+        DELETE FROM [Song]
+        WHERE artist_id IN (SELECT artist_id FROM [Artist] WHERE user_id = @user_id)`);
+
+      // Delete albums if user is an artist
+      await request.query(`
+        DELETE FROM [Album]
+        WHERE artist_id IN (SELECT artist_id FROM [Artist] WHERE user_id = @user_id)`);
+
+      // Delete artist record if exists
+      await request.query(`
+        DELETE FROM [Artist]
+        WHERE user_id = @user_id`);
+
+      // Finally delete the user
+      await request.query(`
+        DELETE FROM [User]
+        WHERE user_id = @user_id`);
+
+      await transaction.commit();
+      res.json({ success: true, message: 'Account deleted successfully' });
+    } catch (err) {
+      await transaction.rollback();
+      throw err;
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+//edit end
+
+
+
+=======
   } catch (err) {
     console.error('Route error:', err);
     res.status(500).json({ error: 'Internal server error' });
