@@ -19,7 +19,8 @@ router.get("/data", async (req, res) => {
   try {
     const myQuery = "SELECT * FROM UserRole";
     const request = new sql.Request();
-    request.query(myQuery, async (err, result) => {å
+    request.query(myQuery, async (err, result) => {
+    
       res.json(result.recordset);
     })
 
@@ -525,13 +526,13 @@ router.post("/playlist/new", async (req, res) => {
 
 //Start: Add song to playlist
 router.post("/playlist/:playlist_id/song", async (req, res) => {
-  try{
+  try {
     //Code to handle request goes here
-    const {playlist_id} = req.params;
-    const {song_id, active} = req.body;
+    const { playlist_id } = req.params;
+    const { song_id, active } = req.body;
 
-    if (!playlist_id || !song_id){
-      return res.status(400).json({message: "Playlist ID and song are required."});
+    if (!playlist_id || !song_id) {
+      return res.status(400).json({ message: "Playlist ID and song are required." });
     }
 
     const request = new sql.Request();
@@ -553,9 +554,9 @@ router.post("/playlist/:playlist_id/song", async (req, res) => {
       res.status(500).json({ error: "Failed to add song to playlist" });
     }
 
-  }catch(err){
+  } catch (err) {
     console.error("Error adding song to playlist:", err);
-    res.status(500).json({error: "Internal server error"});
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 //End: Add Song to Playlist
@@ -801,7 +802,7 @@ router.get("/albums", async (req, res) => {
 })
 // End /album-new
 
-});
+
 //End Homepage: Yeni
 export default router;
 
