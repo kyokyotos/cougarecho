@@ -20,7 +20,7 @@ router.get("/data", async (req, res) => {
     const myQuery = "SELECT * FROM UserRole";
     const request = new sql.Request();
     request.query(myQuery, async (err, result) => {
-    
+
       res.json(result.recordset);
     })
 
@@ -214,9 +214,9 @@ router.post("/song-insert", upload.single('song'), async function (req, res, nex
   const album_id = req?.body?.album_id
   const song_name = req.body.song_name || 'Untitled'; // Add this line to get song name
   const isAvailable = true;
-  
+
   console.log("user_id: ", user_id, ", file", file, ", song_name: ", song_name)
-  
+
   if (!file || !user_id || !album_id) {
     return res.status(400).json({ error: "File upload failed. Necessary fields not received." });
   }
@@ -235,7 +235,7 @@ router.post("/song-insert", upload.single('song'), async function (req, res, nex
       OUTPUT inserted.song_id INTO @InsertedSongs \
       VALUES( @song_name, @album_id, (SELECT A.artist_id FROM [Artist] A WHERE A.user_id = @user_id), GETDATE(), @isAvailable); \
       SELECT * FROM @InsertedSongs;');
-    
+
     console.log("Finished query1")
     console.log(result1?.recordset?.[0].id)
     const song_id = result1?.recordset?.[0].id
@@ -252,7 +252,7 @@ router.post("/song-insert", upload.single('song'), async function (req, res, nex
     request2.input('song_file', sql.VarBinary(sql.MAX), fileBuffer)
     request2.query(`INSERT INTO [SongFile] (song_id, song_file, file_name)
               VALUES (@song_id, @song_file, @file_name)`);
-    
+
     fs.unlinkSync(filePath);
     console.log("Song inserted successfully with name:", song_name)
     return res.status(200).json({ message: "Success", song_id, song_name })
@@ -491,7 +491,7 @@ router.get('/songs/search', async (req, res) => {
   try {
     // Get and validate the keyword
     const keyword = req.query.keyword?.toString() || '';
-    
+
     // Log for debugging
     console.log('Search request received:', { keyword });
 
@@ -527,9 +527,9 @@ router.get('/songs/search', async (req, res) => {
     return res.status(200).json(result.recordset);
   } catch (error) {
     console.error('Search error:', error);
-    return res.status(500).json({ 
+    return res.status(500).json({
       error: 'Error searching songs',
-      details: error.message 
+      details: error.message
     });
   }
 });
@@ -680,7 +680,7 @@ router.get('/playlist/:playlist_id', async (req, res) => {
     const { playlist_id } = req.params;
     const request = new sql.Request();
     request.input('playlist_id', sql.Int, playlist_id);
-    
+
     // First get playlist details
     const playlist = await request.query(`
       SELECT p.*, u.username as creator_name 
@@ -714,11 +714,11 @@ router.put('/playlist/:playlist_id', async (req, res) => {
   try {
     const { playlist_id } = req.params;
     const { title } = req.body;
-    
+
     const request = new sql.Request();
     request.input('playlist_id', sql.Int, playlist_id);
     request.input('title', sql.VarChar, title);
-    
+
     await request.query(`
       UPDATE [Playlist]
       SET title = @title, updated_at = GETDATE()
@@ -736,11 +736,11 @@ router.put('/playlist/:playlist_id', async (req, res) => {
   try {
     const { playlist_id } = req.params;
     const { title } = req.body;
-    
+
     const request = new sql.Request();
     request.input('playlist_id', sql.Int, playlist_id);
     request.input('title', sql.VarChar, title);
-    
+
     await request.query(`
       UPDATE [Playlist]
       SET title = @title, updated_at = GETDATE()
@@ -758,10 +758,10 @@ router.put('/playlist/:playlist_id', async (req, res) => {
 router.get('/playlists/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const request = new sql.Request();
     request.input('userId', sql.Int, userId);
-    
+
     const result = await request.query(`
       SELECT 
         p.playlist_id,
@@ -774,7 +774,7 @@ router.get('/playlists/user/:userId', async (req, res) => {
       WHERE p.user_id = @userId
       ORDER BY p.created_at DESC
     `);
-    
+
     console.log('Found playlists:', result.recordset); // Fixed logging statement
     res.json(result.recordset);
   } catch (err) {
@@ -857,7 +857,7 @@ router.get('/user/profile/:user_id', async (req, res) => {
     const user_id = req.params.user_id;
     const request = new sql.Request();
     request.input('user_id', sql.Int, user_id);
-    
+
     const myQuery = `
       SELECT U.user_id, U.username, U.display_name, U.role_id,
         (SELECT COUNT(*) FROM [Playlist] WHERE user_id = U.user_id) as playlist_count
@@ -879,7 +879,7 @@ router.get('/user/profile/:user_id', async (req, res) => {
 router.put('/user/displayname', async (req, res) => {
   try {
     const { user_id, display_name } = req.body;
-    
+
     if (!display_name?.trim()) {
       return res.status(400).json({ error: 'Display name cannot be empty' });
     }
@@ -1022,17 +1022,6 @@ router.delete('/user/delete/:user_id', async (req, res) => {
     }
   } catch (err) {
     res.status(500).json({ error: err.message });
-  }
-});
-
-//edit end
-
-
-
-=======
-  } catch (err) {
-    console.error('Route error:', err);
-    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
