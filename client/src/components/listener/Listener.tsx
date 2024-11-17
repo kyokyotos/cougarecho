@@ -77,6 +77,7 @@ const Listener = () => {
         console.log(profileData)
 
         setUserProfile({ ...userProfile, ...profileData });
+
         //console.log(topAlbums)
 
       } catch (err) {

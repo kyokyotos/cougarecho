@@ -87,6 +87,7 @@ router.get('/artist/:artist_id/IMG', async (req, res) => {
         const imageBuffer = result?.recordset?.[0].album_cover;
         res.setHeader('Content-Type', 'image/jpeg'); // Set the correct MIME type
         res.send(imageBuffer);
+
       } else {
         return res.status(300).json({ message: "Album does not exist." });
       }
@@ -162,6 +163,7 @@ router.get('/album/playcount/3', async (req, res) => {
         lastPlayed: album.lastPlayed,
         album_cover: base64Image ? `data:image/jpeg;base64,${base64Image}` : null, // Include MIME type prefix
       };
+
     })
 
     /*console.log([{ ...result?.recordset?.[0], album_cover: null },
