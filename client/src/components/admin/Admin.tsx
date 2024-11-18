@@ -4,53 +4,61 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Search, Home, Settings, Menu, PlusCircle, User, Edit2, Loader, X, Music, LogOut, Users, Mic, Music2 } from 'lucide-react';
 import Photo from '../photo/Photo';
 
+interface AdminProfile {
+  user_id: string;
+  name: string;
+  playlists: number;
+}
 
-const Admin = () => {
-  const [adminProfile, setAdminProfile] = useState({ name: '', playlists: 0 });
-  const [activityStats, setActivityStats] = useState({
-    totalUsers: 0,
+interface ActivityStats {
+  totalListeners: number;
+  totalArtists: number;
+  totalSongs: number;
+}
+
+const Admin: React.FC = () => {
+  const [adminProfile, setAdminProfile] = useState<AdminProfile>({ user_id: '', name: '', playlists: 0 });
+  const [activityStats, setActivityStats] = useState<ActivityStats>({
+    totalListeners: 0,
+
     totalArtists: 0,
-    totalSongs: 0,
+    totalSongs: 0
   });
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isMenuExpanded, setIsMenuExpanded] = useState<boolean>(false);
+  const [searchValue, setSearchValue] = useState<string>('');
+  const [showReportDropdown, setShowReportDropdown] = useState<boolean>(false);
 
-  const [isMenuExpanded, setIsMenuExpanded] = useState(false);
-  const [searchValue, setSearchValue] = useState('');
-  const [showReportDropdown, setShowReportDropdown] = useState(false);
 
   const navigate = useNavigate();
-
-  // Fetch admin profile
-  const fetchAdminProfile = async () => {
-    const response = await fetch('http://localhost:8080/api/admin-profile');
-    if (!response.ok) {
-      throw new Error('Failed to fetch admin profile');
-    }
-    return response.json();
-  };
-
-  // Fetch activity stats
-  const fetchActivityStats = async () => {
-    const response = await fetch('http://localhost:8080/api/activity-stats');
-    if (!response.ok) {
-      throw new Error('Failed to fetch activity stats');
-    }
-    return response.json();
-  };
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
       setError(null);
       try {
+        // Fetch admin profile
+        const profileResponse = await fetch('http://localhost:8080/api/admin-profile');
+        if (!profileResponse.ok) {
+          throw new Error('Failed to fetch admin profile');
+        }
+        const profileData = await profileResponse.json();
 
-        const [profileData, statsData] = await Promise.all([
-          fetchAdminProfile(),
-          fetchActivityStats(),
-        ]);
-        setAdminProfile(profileData || { name: '', playlists: 0 });
-        setActivityStats(statsData || { totalUsers: 0, totalArtists: 0, totalSongs: 0 });
+        // Fetch activity stats
+        const statsResponse = await fetch('http://localhost:8080/api/activity-stats');
+        if (!statsResponse.ok) {
+          throw new Error('Failed to fetch activity stats');
+        }
+        const statsData = await statsResponse.json();
+
+        setAdminProfile(profileData);
+        setActivityStats(statsData);
+
+        // Debug logs
+        console.log('Profile Data:', profileData);
+        console.log('Stats Data:', statsData);
+
       } catch (err) {
         setError('Failed to fetch data. Please try again later.');
         console.error('Error fetching data:', err);
@@ -79,16 +87,12 @@ const Admin = () => {
     navigate('/newplaylist');
   };
 
-  const handleActivityTracking = () => {
-    navigate('/tracking');
-  };
-
-  const handleGenerateReport = (type) => {
+  const handleGenerateReport = (type: string) => {
     console.log(`Generating ${type} report...`);
     setShowReportDropdown(false);
   };
 
-  const handleSearchChange = (e) => {
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setSearchValue(value);
     if (value.length > 0) {
@@ -121,35 +125,60 @@ const Admin = () => {
 
       <div className={`w-16 flex flex-col items-center py-4 bg-black border-r border-gray-800 transition-all duration-300 ease-in-out ${isMenuExpanded ? 'w-64' : 'w-16'}`}>
         <div className="flex flex-col items-center space-y-4 mb-8">
-          <button onClick={() => setIsMenuExpanded(!isMenuExpanded)} className="text-[#1ED760] hover:text-white" aria-label="Menu">
+          <button 
+            onClick={() => setIsMenuExpanded(!isMenuExpanded)} 
+            className="text-[#1ED760] hover:text-white"
+            aria-label="Menu"
+          >
             <Menu className="w-6 h-6" />
           </button>
         </div>
-        <div className="flex-grow space-y-4">
-          <Link to="/homepage" aria-label="Home" className="text-[#1ED760] hover:text-white">
-            <Home className="w-6 h-6" />
-          </Link>
-          <Link to="/search" aria-label="Search" className="text-[#1ED760] hover:text-white">
-            <Search className="w-6 h-6" />
-          </Link>
-          <Link to="/library" aria-label="Library" className="text-[#1ED760] hover:text-white">
-            <Music className="w-6 h-6" />
-          </Link>
-        </div>
+        <div className="flex-grow"></div>
         <div className="mt-auto flex flex-col items-center space-y-4 mb-4">
-          <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
+          <button 
+            onClick={handleCreatePlaylist}
+            className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white"
+            aria-label="Add"
+          >
             <PlusCircle className="w-6 h-6" />
           </button>
           <Link to="/useredit" aria-label="User Profile" className="text-[#1ED760] hover:text-white">
             <User className="w-6 h-6" />
           </Link>
-          <button onClick={handleLogout} className="text-[#1ED760] hover:text-white" aria-label="Logout">
-            <LogOut className="w-6 h-6" />
-          </button>
         </div>
       </div>
 
-      {/* Main Content */}
+      {/* Expandable Menu */}
+      {isMenuExpanded && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
+          <div className="bg-[#121212] w-64 h-full p-4">
+            <button onClick={() => setIsMenuExpanded(false)} className="mb-8 text-[#1ED760]">
+              <X className="w-6 h-6" />
+            </button>
+            <nav>
+              <ul className="space-y-4">
+                <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
+                <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
+                <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
+                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
+              </ul>
+            </nav>
+            <div className="mt-auto">
+              <Link to="/useredit" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4">
+                <User className="w-5 h-5 mr-3" /> Profile
+              </Link>
+              <button 
+                onClick={handleLogout}
+                className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center mt-4 w-full"
+              >
+                <LogOut className="w-5 h-5 mr-3" /> Log out
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main content */}
       <div className="flex-1 flex flex-col p-8">
         {/* Top bar */}
         <div className="flex items-center justify-between mb-8">
@@ -224,12 +253,7 @@ const Admin = () => {
                 </div>
               )}
             </div>
-            <button
-              onClick={handleActivityTracking}
-              className="bg-[#2A2A2A] hover:bg-[#3A3A3A] text-[#EBE7CD] font-semibold py-3 px-6 rounded-full transition-colors duration-200"
-            >
-              Activity Tracking System
-            </button>
+
             <button
               onClick={() => navigate('/makeadmin')}
               className="bg-[#2A2A2A] hover:bg-[#3A3A3A] text-[#EBE7CD] font-semibold py-3 px-6 rounded-full transition-colors duration-200"
@@ -249,21 +273,27 @@ const Admin = () => {
                 <Users className="w-6 h-6 mr-2 text-[#1ED760]" />
                 <span className="text-lg font-semibold">Total Listeners</span>
               </div>
-              <p className="text-3xl font-bold text-[#1ED760]">{activityStats.totalUsers?.toLocaleString() || 0}</p>
+              <p className="text-3xl font-bold text-[#1ED760]">
+                {activityStats.totalListeners.toLocaleString()}
+              </p>
             </div>
             <div className="bg-[#2A2A2A] p-6 rounded-lg">
               <div className="flex items-center mb-2">
                 <Mic className="w-6 h-6 mr-2 text-[#1ED760]" />
                 <span className="text-lg font-semibold">Total Artists</span>
               </div>
-              <p className="text-3xl font-bold text-[#1ED760]">{activityStats.totalArtists?.toLocaleString() || 0}</p>
+              <p className="text-3xl font-bold text-[#1ED760]">
+                {activityStats.totalArtists.toLocaleString()}
+              </p>
             </div>
             <div className="bg-[#2A2A2A] p-6 rounded-lg">
               <div className="flex items-center mb-2">
                 <Music2 className="w-6 h-6 mr-2 text-[#1ED760]" />
                 <span className="text-lg font-semibold">Songs Uploaded</span>
               </div>
-              <p className="text-3xl font-bold text-[#1ED760]">{activityStats.totalSongs?.toLocaleString() || 0}</p>
+              <p className="text-3xl font-bold text-[#1ED760]">
+                {activityStats.totalSongs.toLocaleString()}
+              </p>
             </div>
           </div>
         </div>
