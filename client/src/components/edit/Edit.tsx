@@ -4,6 +4,13 @@ import { Search, Settings, Menu, User, Edit2, PlusCircle, Home, X, Music, LogOut
 import axios from '../../api/axios';
 import { UserContext } from '../../context/UserContext';
 
+// Simple Alert Component
+const CustomAlert = ({ message, type }) => (
+  <div className={`p-4 rounded-md ${type === 'success' ? 'bg-green-700' : 'bg-red-700'} text-white`}>
+    {message}
+  </div>
+);
+
 const UserProfileSettings = () => {
   const navigate = useNavigate();
   const { user, setUser } = useContext(UserContext);
@@ -87,6 +94,7 @@ const UserProfileSettings = () => {
   const handleNameChange = async () => {
     if (!displayName.trim()) {
       setError('Display name cannot be empty');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
@@ -98,9 +106,11 @@ const UserProfileSettings = () => {
       );
 
       setSuccessMessage('Display name updated successfully!');
+      setError('');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       setError(err.response?.data?.error || 'Error updating display name');
+      setSuccessMessage('');
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -108,6 +118,7 @@ const UserProfileSettings = () => {
   const handleUsernameChange = async () => {
     if (!oldUsername || !newUsername) {
       setError('Please fill in both username fields');
+      setTimeout(() => setError(''), 3000);
       return;
     }
 
@@ -123,12 +134,14 @@ const UserProfileSettings = () => {
       );
 
       setSuccessMessage('Username changed successfully!');
+      setError('');
       setOldUsername('');
       setNewUsername('');
       setUser({ ...user, username: newUsername });
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (err) {
       setError(err.response?.data?.error || 'Error updating username');
+      setSuccessMessage('');
       setTimeout(() => setError(''), 3000);
     }
   };
@@ -150,6 +163,7 @@ const UserProfileSettings = () => {
       });
     } catch (err) {
       setError(err.response?.data?.error || 'Error deleting account');
+      setTimeout(() => setError(''), 3000);
       setShowDeleteConfirmation(false);
     }
   };
@@ -165,18 +179,18 @@ const UserProfileSettings = () => {
   return (
     <div className="bg-[#121212] text-[#EBE7CD] min-h-screen flex font-sans">
       {/* Sidebar */}
-      <div className={`w-16 flex flex-col items-center py-4 bg-black border-r border-gray-800 transition-all duration-300 ease-in-out ${isMenuExpanded ? 'w-64' : 'w-16'}`}>
+      <div className={`fixed left-0 h-full w-16 flex flex-col items-center py-4 bg-black border-r border-gray-800 transition-all duration-300 ease-in-out ${isMenuExpanded ? 'w-64' : 'w-16'}`}>
         <div className="flex flex-col items-center space-y-4 mb-8">
-          <button onClick={() => setIsMenuExpanded(!isMenuExpanded)} className="text-[#1ED760] hover:text-white" aria-label="Menu">
+          <button onClick={() => setIsMenuExpanded(!isMenuExpanded)} className="text-[#1ED760] hover:text-white">
             <Menu className="w-6 h-6" />
           </button>
         </div>
         <div className="flex-grow"></div>
         <div className="mt-auto flex flex-col items-center space-y-4 mb-4">
-          <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white" aria-label="Add">
+          <button onClick={handleCreatePlaylist} className="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center text-[#EBE7CD] hover:text-white">
             <PlusCircle className="w-6 h-6" />
           </button>
-          <Link to={getProfilePath()} aria-label="User Profile" className="text-[#1ED760] hover:text-white">
+          <Link to={getProfilePath()} className="text-[#1ED760] hover:text-white">
             <User className="w-6 h-6" />
           </Link>
         </div>
@@ -185,16 +199,32 @@ const UserProfileSettings = () => {
       {/* Expandable Menu */}
       {isMenuExpanded && (
         <div className="fixed inset-0 bg-black bg-opacity-50 z-50">
-          <div className="bg-[#121212] w-64 h-full p-4">
+          <div className="fixed left-0 bg-[#121212] w-64 h-full p-4">
             <button onClick={() => setIsMenuExpanded(false)} className="mb-8 text-[#1ED760]">
               <X className="w-6 h-6" />
             </button>
             <nav>
               <ul className="space-y-4">
-                <li><Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Home className="w-5 h-5 mr-3" /> Home</Link></li>
-                <li><Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Search className="w-5 h-5 mr-3" /> Search</Link></li>
-                <li><Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><Music className="w-5 h-5 mr-3" /> Your Library</Link></li>
-                <li><button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center"><PlusCircle className="w-5 h-5 mr-3" /> Create Playlist</button></li>
+                <li>
+                  <Link to="/homepage" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center">
+                    <Home className="w-5 h-5 mr-3" /> Home
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/search" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center">
+                    <Search className="w-5 h-5 mr-3" /> Search
+                  </Link>
+                </li>
+                <li>
+                  <Link to="/userlibrary" className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center">
+                    <Music className="w-5 h-5 mr-3" /> Your Library
+                  </Link>
+                </li>
+                <li>
+                  <button onClick={handleCreatePlaylist} className="text-[#EBE7CD] hover:text-[#1ED760] flex items-center">
+                    <PlusCircle className="w-5 h-5 mr-3" /> Create Playlist
+                  </button>
+                </li>
               </ul>
             </nav>
             <div className="mt-auto">
@@ -213,20 +243,21 @@ const UserProfileSettings = () => {
       )}
 
       {/* Main content */}
-      <div className="flex-1 flex flex-col p-4">
+      <div className="flex-1 flex flex-col p-4 ml-16">
         <div className="max-w-md mx-auto w-full space-y-6 mt-8">
           <div className="text-3xl font-bold mb-8">{user.username}</div>
 
-          {successMessage && (
-            <Alert className="bg-green-700 border-green-600">
-              <AlertDescription>{successMessage}</AlertDescription>
-            </Alert>
-          )}
-          
-          {error && (
-            <Alert className="bg-red-700 border-red-600">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
+          {/* Message Display Section */}
+          {(successMessage || error) && (
+            <div className="fixed top-4 right-4 left-4 md:left-auto md:w-96 z-50">
+              {successMessage && (
+                <CustomAlert message={successMessage} type="success" />
+              )}
+              
+              {error && (
+                <CustomAlert message={error} type="error" />
+              )}
+            </div>
           )}
 
           {/* Name Change Section */}
@@ -249,7 +280,7 @@ const UserProfileSettings = () => {
             </div>
           </div>
 
-          {/* Change Username Section */}
+          {/* Username Change Section */}
           <div className="space-y-4">
             <h2 className="text-xl font-semibold">Change Username</h2>
             <input
@@ -287,6 +318,7 @@ const UserProfileSettings = () => {
             </p>
           </div>
 
+          {/* Delete Confirmation Modal */}
           {showDeleteConfirmation && (
             <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
               <div className="bg-[#2A2A2A] p-6 rounded-lg max-w-sm w-full mx-4">
