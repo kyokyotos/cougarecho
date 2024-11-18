@@ -87,9 +87,22 @@ const Admin: React.FC = () => {
     navigate('/newplaylist');
   };
 
-  const handleGenerateReport = (type: string) => {
-    console.log(`Generating ${type} report...`);
+
+  const handleGenerateReport = (type) => {
     setShowReportDropdown(false);
+    switch (type) {
+      case 'song':
+        navigate('/song-rating');
+        break;
+      case 'user':
+        navigate('/user-rating');
+        break;
+      case 'artist':
+        navigate('/artist-rating');
+        break;
+      default:
+        console.log(`Unknown report type: ${type}`);
+    }
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {

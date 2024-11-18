@@ -13,8 +13,6 @@ const router = express.Router();
 const SECRET_KEY = process.env.ACCESS_TOKEN_SECRET;
 const userRoles = { "Listener": 1, "Artist": 2, "Admin": 3 }
 
-
-
 router.get("/data", async (req, res) => {
   try {
     const myQuery = "SELECT * FROM UserRole";
@@ -32,7 +30,6 @@ router.get("/data", async (req, res) => {
 router.get("/test", (req, res) => {
   res.json([{ "test": "hello world!" }])
 });
-
 // Begin Josh Lewis
 router.get('/listener/:id', async (req, res) => {
   try {
@@ -176,10 +173,8 @@ router.get('/album/playcount/3', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
-
 // Create 'uploads' directory if it doesn't exist
 const uploadDir = path.join(process.cwd(), 'uploads');
 try {
@@ -200,7 +195,6 @@ const storage = multer.diskStorage({
     cb(null, file.originalname);
   },
 });
-
 const upload = multer({ storage: storage });
 const album_upload = upload.fields([
   { name: 'song', maxCount: 20 },
@@ -214,15 +208,10 @@ router.post("/song-insert", upload.single('song'), async function (req, res, nex
   const album_id = req?.body?.album_id
   const song_name = req.body.song_name || 'Untitled'; // Add this line to get song name
   const isAvailable = true;
-
-  
   console.log("user_id: ", user_id, ", file", file, ", song_name: ", song_name)
-  
-
   if (!file || !user_id || !album_id) {
     return res.status(400).json({ error: "File upload failed. Necessary fields not received." });
   }
-
   try {
     const request1 = new sql.Request();
     request1.input('song_name', sql.VarChar, song_name); // Use the provided song name
@@ -264,8 +253,6 @@ router.post("/song-insert", upload.single('song'), async function (req, res, nex
   }
   //const transaction = new sql.Transaction()
   //transaction.begin(err => {
-
-
   try {
     const request1 = new sql.Request();
     request1.input('song_name', sql.VarChar, song_name);
@@ -307,8 +294,6 @@ router.post("/song-insert", upload.single('song'), async function (req, res, nex
     //console.log('Transaction rolled back.')
   }
 })
-
-
 // Album upload endpoint
 router.post("/album-insert", upload.single('img'), async function (req, res) {
   try {
@@ -393,7 +378,6 @@ router.post("/artist/profile/update", async (req, res) => {
     res.status(500).send('Internal server error');
   }
 });
-
 router.post('/login', async (req, res) => {
   const { username, password } = req.body;
   //console.log(user_name + " " + password)
@@ -436,7 +420,6 @@ router.post('/login', async (req, res) => {
   });
 });
 // End /login
-
 // Begin /register get method: This method checks if username is available.
 router.get('/register/:username', async (req, res) => {
   try {
@@ -460,7 +443,6 @@ router.get('/register/:username', async (req, res) => {
   }
 });
 // End /register get method:
-
 // Begin /register
 router.post("/register", async (req, res) => {
   try {
@@ -534,15 +516,9 @@ router.post("/register", async (req, res) => {
     res.json({ error: error.message });
   }
 });
-
-
 // End /register
-
 // End Josh Lewis
-
-
 //Thinh Bui
-
 //get all user
 router.get('/users', async (req, res) => {
   try {
@@ -554,7 +530,6 @@ router.get('/users', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 //search for songs and artist name
 router.get('/songs/search', async (req, res) => {
   try {
@@ -602,7 +577,6 @@ router.get('/songs/search', async (req, res) => {
     });
   }
 });
-
 router.get('/user-rating', async (req, res) => {
   try {
     const pool = await sql.connect('your-database-connection-string');
@@ -616,11 +590,6 @@ router.get('/user-rating', async (req, res) => {
           SELECT user_id, COUNT(playlist_id) AS playlists_created
           FROM dbo.Playlist
           GROUP BY user_id
-      ),
-      UserLikes AS (
-          SELECT user_id, COUNT(song_id) AS likes_given
-          FROM dbo.Likes
-          GROUP BY user_id
       )
       
       SELECT 
@@ -628,11 +597,10 @@ router.get('/user-rating', async (req, res) => {
           u.username,
           u.display_name,
           ISNULL(up.songs_played, 0) AS songs_played,
-          ISNULL(ul.likes_given, 0) AS likes_given,
-          ISNULL(upc.playlists_created, 0) AS playlists_created
+          ISNULL(upc.playlists_created, 0) AS playlists_created,
+          u.created_at AS account_created_at
       FROM dbo.[User] u
       LEFT JOIN UserPlays up ON u.user_id = up.user_id
-      LEFT JOIN UserLikes ul ON u.user_id = ul.user_id
       LEFT JOIN UserPlaylists upc ON u.user_id = upc.user_id
       ORDER BY u.user_id;
     `);
@@ -642,7 +610,6 @@ router.get('/user-rating', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 router.get('/song-rating', async (req, res) => {
   try {
     const pool = await sql.connect('your-database-connection-string');
@@ -671,7 +638,6 @@ router.get('/song-rating', async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 router.get('/artist-rating', async (req, res) => {
   try {
       const pool = await sql.connect('your-database-connection-string');
@@ -735,7 +701,6 @@ router.get('/artist-rating', async (req, res) => {
       res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 //notifications
 router.get('/artist/:artist_id/notifications', async (req, res) => {
   try {
@@ -807,9 +772,7 @@ router.put('/artist/:artist_id/notifications/mark-read', async (req, res) => {
   }
 });
 //End Thinh Bui
-
 //Will Nguyen Begin
-
 //Start: Create New Playlist
 router.post("/playlist/new", async (req, res) => {
   try {
@@ -842,7 +805,6 @@ router.post("/playlist/new", async (req, res) => {
   }
 });
 //End: Create New Playlist
-
 //Start: Add song to playlist
 router.post("/playlist/:playlist_id/song", async (req, res) => {
   try {
@@ -879,7 +841,6 @@ router.post("/playlist/:playlist_id/song", async (req, res) => {
   }
 });
 //End: Add Song to Playlist
-
 // Start: Delete song from playlist
 router.delete('/playlist/:playlist_id/song/:song_id', async (req, res) => {
   try {
@@ -909,7 +870,6 @@ router.delete('/playlist/:playlist_id/song/:song_id', async (req, res) => {
   }
 });
 //End: Delete song from playlist
-
 // Delete playlist
 router.delete('/playlist/:playlist_id', async (req, res) => {
   try {
@@ -945,9 +905,7 @@ router.delete('/playlist/:playlist_id', async (req, res) => {
   }
 });
 //End: delete playlist
-
 //Start: get playlist
-
 router.get('/playlist/:playlist_id', async (req, res) => {
   try {
     const { playlist_id } = req.params;
@@ -981,7 +939,6 @@ router.get('/playlist/:playlist_id', async (req, res) => {
   }
 });
 //End: get playlist
-
 //Start: update playlist name
 router.put('/playlist/:playlist_id', async (req, res) => {
   try {
@@ -1056,9 +1013,7 @@ router.get('/playlists/user/:userId', async (req, res) => {
   }
 });
 //End: get user playlists
-
 //Will Nguyen End
-
 //Homepage: Yeni
 // In your api.js file, update the routes
 // Get top 3 artists
@@ -1088,7 +1043,6 @@ router.get("/artists", async (req, res) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 });
-
 // Get top 3 albums
 router.get("/albums", async (req, res) => {
   try {
@@ -1119,11 +1073,7 @@ router.get("/albums", async (req, res) => {
   }
 });
 //End Homepage: Yeni
-
-
-
 //edit start Yeni
-
 // Get user profile with display name and username
 router.get('/user/profile/:user_id', async (req, res) => {
   try {
