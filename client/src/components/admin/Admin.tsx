@@ -87,7 +87,6 @@ const Admin: React.FC = () => {
     navigate('/newplaylist');
   };
 
-
   const handleGenerateReport = (type) => {
     setShowReportDropdown(false);
     switch (type) {
