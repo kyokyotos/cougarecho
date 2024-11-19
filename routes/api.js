@@ -13,6 +13,33 @@ const router = express.Router();
 const SECRET_KEY = process.env.ACCESS_TOKEN_SECRET;
 const userRoles = { "Listener": 1, "Artist": 2, "Admin": 3 }
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+// Create 'uploads' directory if it doesn't exist
+const uploadDir = process.env.UPLOAD_PATH || '/tmp/uploads';
+try {
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+} catch (err) {
+  console.error('Error creating upload directory:', err);
+  // Handle the error appropriately
+}
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, uploadDir); // Directory where files will be stored
+  },
+  filename: function (req, file, cb) {
+    // Save the file with its original name
+    cb(null, file.originalname);
+  },
+});
+const upload = multer({ storage: storage });
+const album_upload = upload.fields([
+  { name: 'song', maxCount: 20 },
+  { name: 'img', maxCount: 1 }
+])
 router.get("/data", async (req, res) => {
   try {
     const myQuery = "SELECT * FROM UserRole";
@@ -173,33 +200,6 @@ router.get('/album/playcount/3', async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-// Create 'uploads' directory if it doesn't exist
-const uploadDir = path.join(process.cwd(), 'uploads');
-try {
-  if (!fs.existsSync(uploadDir)) {
-    fs.mkdirSync(uploadDir, { recursive: true });
-  }
-} catch (err) {
-  console.error('Error creating upload directory:', err);
-  // Handle the error appropriately
-}
-// Configure multer for file uploads
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, uploadDir); // Directory where files will be stored
-  },
-  filename: function (req, file, cb) {
-    // Save the file with its original name
-    cb(null, file.originalname);
-  },
-});
-const upload = multer({ storage: storage });
-const album_upload = upload.fields([
-  { name: 'song', maxCount: 20 },
-  { name: 'img', maxCount: 1 }
-])
 // Begin /album-upload
 router.post("/song-insert", upload.single('song'), async function (req, res, next) {
   console.log(req?.body)
@@ -315,7 +315,7 @@ router.post("/album-insert", upload.single('img'), async function (req, res) {
     request.input('album_cover', sql.VarBinary(sql.MAX), fileBuffer);
 
     console.log("Inserting album...");
-    
+
     const result = await request.query(`
       DECLARE @InsertedAlbum TABLE (album_id INT);
       INSERT INTO [Album] (create_at, update_at, artist_id, album_name, album_cover)
@@ -518,6 +518,10 @@ router.post("/register", async (req, res) => {
 });
 // End /register
 // End Josh Lewis
+/**********************************************************************************************************************/
+/**********************************************************************************************************************/
+/**********************************************************************************************************************/
+/**********************************************************************************************************************/
 //Thinh Bui
 //get all user
 router.get('/users', async (req, res) => {
@@ -640,10 +644,10 @@ router.get('/song-rating', async (req, res) => {
 });
 router.get('/artist-rating', async (req, res) => {
   try {
-      const pool = await sql.connect('your-database-connection-string');
-      console.log("Database connection established");
+    const pool = await sql.connect('your-database-connection-string');
+    console.log("Database connection established");
 
-      const results = await pool.request().query(`
+    const results = await pool.request().query(`
           WITH ArtistSongCounts AS (
               SELECT 
                   s.artist_id,
@@ -694,11 +698,11 @@ router.get('/artist-rating', async (req, res) => {
               total_likes DESC;
       `);
 
-      console.log("Artist summary report data:", results.recordset);
-      res.json(results.recordset); // Send data as JSON response
+    console.log("Artist summary report data:", results.recordset);
+    res.json(results.recordset); // Send data as JSON response
   } catch (error) {
-      console.error('Error fetching artist summary report:', error);
-      res.status(500).json({ error: 'Internal server error' });
+    console.error('Error fetching artist summary report:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 //notifications
@@ -1080,7 +1084,7 @@ router.get('/user/profile/:user_id', async (req, res) => {
     const user_id = req.params.user_id;
     const request = new sql.Request();
     request.input('user_id', sql.Int, user_id);
-    
+
     const myQuery = `
       SELECT U.user_id, U.username, U.display_name, U.role_id,
         (SELECT COUNT(*) FROM [Playlist] WHERE user_id = U.user_id) as playlist_count
@@ -1102,7 +1106,7 @@ router.get('/user/profile/:user_id', async (req, res) => {
 router.put('/user/displayname', async (req, res) => {
   try {
     const { user_id, display_name } = req.body;
-    
+
     if (!display_name?.trim()) {
       return res.status(400).json({ error: 'Display name cannot be empty' });
     }
