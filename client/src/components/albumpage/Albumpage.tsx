@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { Play, Home, Settings, Pause, Music, LogOut, Search } from 'lucide-react';
+import { Play, Home, Settings, Pause, Music, LogOut, Search, Loader } from 'lucide-react';
 import Player from '../songplayer/Player';
 import Sidebar from '../../components/sidebar/Sidebar';  // Import the Sidebar component
 import axios from '../../api/axios';
 
 interface Song {
   song_id: string;
-  title: string;
+  song_name: string;
   artist: string;
   duration: string;
-  plays: number;
-  path: string;
+  song_plays: number;
+  //path: string;
   album_id: string;
   artist_id: string;
   created_at: string;
@@ -29,86 +29,92 @@ interface Album {
   songs: Song[];
 }
 
-const AlbumPage = (/*album_id*/) => {
+const AlbumPage = ({ albumId }) => {
   const navigate = useNavigate();
-  const { albumId } = useParams();
   const [imageError, setImageError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [album, setAlbum] = useState<Album>({
-    album_id: albumId || 'mock-album-id',
-    album_name: "Hit me hard and soft",
-    artist_id: 'artist-1',
-    artist_name: "Billie Eilish",
-    path: "/api/placeholder/400/400",
-    create_at: new Date().toISOString(),
-    update_at: new Date().toISOString(),
-    songs: [
-      {
-        song_id: "1",
-        title: "Skinny",
-        artist: "Billie Eilish",
-        duration: "3:42",
-        plays: 590383201,
-        path: "/path/to/audio1.mp3",
-        album_id: "album-1",
-        artist_id: "artist-1",
-        created_at: new Date().toISOString(),
-        isAvailable: true
-      },
-      {
-        song_id: "2",
-        title: "Lunch",
-        artist: "Billie Eilish",
-        duration: "3:15",
-        plays: 590383201,
-        path: "/path/to/audio2.mp3",
-        album_id: "album-1",
-        artist_id: "artist-1",
-        created_at: new Date().toISOString(),
-        isAvailable: true
-      },
-      {
-        song_id: "3",
-        title: "Wildflower",
-        artist: "Billie Eilish",
-        duration: "4:01",
-        plays: 480293102,
-        path: "/path/to/audio3.mp3",
-        album_id: "album-1",
-        artist_id: "artist-1",
-        created_at: new Date().toISOString(),
-        isAvailable: true
-      },
-      {
-        song_id: "4",
-        title: "The Greatest",
-        artist: "Billie Eilish",
-        duration: "3:57",
-        plays: 520184930,
-        path: "/path/to/audio4.mp3",
-        album_id: "album-1",
-        artist_id: "artist-1",
-        created_at: new Date().toISOString(),
-        isAvailable: true
-      }
-    ]
-  });
-  const [currentSong, setCurrentSong] = useState<null | {
-    id: string;
-    title: string;
-    artist: string;
-    coverUrl?: string;
-    audioUrl: string;
-  }>(null);
+  const [album, setAlbum] = useState<Album>();
+  /*album_id: albumId || 'mock-album-id',
+  album_name: "Hit me hard and soft",
+  artist_id: 'artist-1',
+  artist_name: "Billie Eilish",
+  create_at: new Date().toISOString(),
+  update_at: new Date().toISOString(),
+  album_cover: 
+  songs: [
+    {
+      song_id: "1",
+      title: "Skinny",
+      artist: "Billie Eilish",
+      duration: "3:42",
+      plays: 590383201,
+      path: "/path/to/audio1.mp3",
+      album_id: "album-1",
+      artist_id: "artist-1",
+      created_at: new Date().toISOString(),
+      isAvailable: true
+    },
+    {
+      song_id: "2",
+      title: "Lunch",
+      artist: "Billie Eilish",
+      duration: "3:15",
+      plays: 590383201,
+      path: "/path/to/audio2.mp3",
+      album_id: "album-1",
+      artist_id: "artist-1",
+      created_at: new Date().toISOString(),
+      isAvailable: true
+    },
+    {
+      song_id: "3",
+      title: "Wildflower",
+      artist: "Billie Eilish",
+      duration: "4:01",
+      plays: 480293102,
+      path: "/path/to/audio3.mp3",
+      album_id: "album-1",
+      artist_id: "artist-1",
+      created_at: new Date().toISOString(),
+      isAvailable: true
+    },
+    {
+      song_id: "4",
+      title: "The Greatest",
+      artist: "Billie Eilish",
+      duration: "3:57",
+      plays: 520184930,
+      path: "/path/to/audio4.mp3",
+      album_id: "album-1",
+      artist_id: "artist-1",
+      created_at: new Date().toISOString(),
+      isAvailable: true
+    }
+  ]
+});
+const [currentSong, setCurrentSong] = useState<null | {
+  id: string;
+  title: string;
+  artist: string;
+  coverUrl?: string;
+  audioUrl: string;
+}>(null);*/
   const [accountType, setAccountType] = useState('listener');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string>('mock-user-id');
 
   useEffect(() => {
     const fetchData = async () => {
-      const result = await axios.get(`/album/103`)
+      try {
+        const result = await axios.get(`/album/103`)
+        console.log(result.data)
+        setAlbum({ ...result?.data })
+      } catch (err) {
 
+      } finally {
+        setLoading(false)
+      }
     }
     fetchData();
   }, []);
@@ -138,36 +144,37 @@ const AlbumPage = (/*album_id*/) => {
       }
     });
   };
-
-  const handleSongClick = (song: Song) => {
-    console.log('Song clicked:', song);
-    if (currentSong?.id === song.song_id) {
-      setCurrentSong(null);
-    } else {
-      setCurrentSong({
-        id: song.song_id,
-        title: song.title,
-        artist: album.artist_name,
-        coverUrl: album.path,
-        audioUrl: song.path
-      });
-    }
-  };
-
-  const handlePlayAll = () => {
-    // Start playing the first song in the album
-    if (album.songs.length > 0) {
-      const firstSong = album.songs[0];
-      setCurrentSong({
-        id: firstSong.song_id,
-        title: firstSong.title,
-        artist: album.artist_name,
-        coverUrl: album.path,
-        audioUrl: firstSong.path
-      });
-    }
-  };
-
+  /*
+    const handleSongClick = (song: Song) => {
+      console.log('Song clicked:', song);
+      if (currentSong?.id === song.song_id) {
+        setCurrentSong(null);
+      } else {
+        setCurrentSong({
+          id: song.song_id,
+          title: song.title,
+          artist: album.artist_name,
+          coverUrl: album.path,
+          audioUrl: song.path
+        });
+      }
+    };
+  */
+  /*
+    const handlePlayAll = () => {
+      // Start playing the first song in the album
+      if (album.songs.length > 0) {
+        const firstSong = album.songs[0];
+        setCurrentSong({
+          id: firstSong.song_id,
+          title: firstSong.title,
+          artist: album.artist_name,
+          coverUrl: album.path,
+          audioUrl: firstSong.path
+        });
+      }
+    };
+  */
   const handleCreatePlaylist = () => {
     navigate('/newplaylist');
   };
@@ -175,7 +182,13 @@ const AlbumPage = (/*album_id*/) => {
   const handleImageError = () => {
     setImageError(true);
   };
-
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-[#121212]">
+        <Loader className="w-10 h-10 text-[#1ED760] animate-spin" />
+      </div>
+    );
+  }
   if (error) {
     return (
       <div className="flex items-center justify-center h-screen bg-[#121212]">
@@ -220,10 +233,10 @@ const AlbumPage = (/*album_id*/) => {
           <div className="bg-[#1A1A1A] rounded-lg p-6">
             <div className="flex items-center space-x-6 mb-6">
               <div className="w-40 h-40 rounded-md overflow-hidden shadow-lg">
-                {!imageError ? (
+                {album?.album_cover ? (
                   <img
-                    src={album.path}
-                    alt={`${album.album_name} by ${album.artist_name}`}
+                    src={album?.album_cover}
+                    alt={`${album?.album_name} by ${album?.artist_name}`}
                     className="w-full h-full object-cover"
                     onError={handleImageError}
                   />
@@ -234,14 +247,14 @@ const AlbumPage = (/*album_id*/) => {
                 )}
               </div>
               <div className="flex-1">
-                <h1 className="text-4xl font-bold">{album.album_name}</h1>
-                <p className="text-xl text-pink-400">{album.artist_name}</p>
-                <p className="text-sm text-gray-400">{album.songs.length} songs</p>
+                <h1 className="text-4xl font-bold">{album?.album_name}</h1>
+                <p className="text-xl text-pink-400">{album?.artist_name}</p>
+                <p className="text-sm text-gray-400">{album?.songs.length} songs</p>
               </div>
             </div>
             <button
               className="bg-[#1ED760] rounded-full p-3 mb-6"
-              onClick={handlePlayAll}
+            //onClick={}
             >
               <Play className="w-8 h-8 text-black" fill="black" />
             </button>
@@ -254,21 +267,21 @@ const AlbumPage = (/*album_id*/) => {
                 </tr>
               </thead>
               <tbody>
-                {album.songs.map((song) => (
+                {album?.songs?.map((song) => (
                   <tr
                     key={song.song_id}
                     className="border-b border-gray-700 hover:bg-gray-800 cursor-pointer"
                     onClick={() => handleSongClick(song)}
                   >
                     <td className="py-3 flex items-center">
-                      {currentSong?.id === song.song_id ? (
+                      {song?.song_id === song?.song_id ? (
                         <Pause className="w-4 h-4 mr-3 text-[#1ED760]" />
                       ) : (
                         <Play className="w-4 h-4 mr-3 text-gray-400" />
                       )}
-                      {song.title}
+                      {song.song_name}
                     </td>
-                    <td className="py-3 text-right text-gray-400">{song.plays.toLocaleString()}</td>
+                    <td className="py-3 text-right text-gray-400">{song.song_plays.toLocaleString()}</td>
                     <td className="py-3 text-right text-gray-400">{song.duration}</td>
                   </tr>
                 ))}
@@ -277,13 +290,7 @@ const AlbumPage = (/*album_id*/) => {
           </div>
         </div>
 
-        {/* Player */}
-        {currentSong && userId && (
-          <Player
-            currentSong={currentSong}
-            userId={userId}
-          />
-        )}
+
       </div>
     </div>
   );

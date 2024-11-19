@@ -366,24 +366,28 @@ router.get('/album/:album_id', async (req, res) => {
     const myQuery = 'SELECT Al.album_id, Al.album_name, Ar.artist_id, Ar.artist_name, Al.create_at, \
         Al.update_at, Al.album_cover  FROM [Album] Al, [Artist] Ar  WHERE Al.artist_id = Ar.artist_id AND Al.album_id = @album_id;';
     const result = await request.query(myQuery);
-    const album_ = await result?.recordset[0];
-    console.log(album_);
-    if (!album_) {
+    const album = await result?.recordset[0];
+    console.log(album);
+    if (!album) {
       return res.json({ message: "album_id does not exists" });
     }
 
     const request2 = new sql.Request();
     request2.input('album_id', sql.Int, album_id)
     const myQuery2 = 'SELECT S.song_id, S.song_name, Ar.artist_name,  S.duration, SP.song_plays, \
-      S.album_id, S.created_at, S.isAvailable  FROM [Song] S, [SongPlays] SP, [Artist] Ar WHERE \
+      S.album_id, S.created_at, Ar.artist_id, S.isAvailable  FROM [Song] S, [SongPlays] SP, [Artist] Ar WHERE \
       S.song_id = SP.song_id AND S.artist_id = Ar.artist_id AND S.album_id = @album_id;';
     const result2 = await request2.query(myQuery2);
     const songs_ = await result2?.recordset;
     console.log(songs_.length)
-
+    console.log(...songs_)
+    const base64Image = album.album_cover
+      ? Buffer.from(album.album_cover).toString('base64')
+      : null;
     const payload = {
-      ...album_,
-      songs: [...songs_]
+      ...album, album_cover:
+        { album_cover: base64Image ? `data:image/jpeg;base64,${base64Image}` : null },
+      songs: songs_
     }
     return res.json(payload)
     /*
@@ -849,14 +853,14 @@ router.post("/playlist/new", async (req, res) => {
 
 router.get('/playlist/:playlist_id', async (req, res) => {
   console.log('Playlist request received for ID:', req.params.playlist_id);
-  
+
   try {
     const { playlist_id } = req.params;
     console.log('Fetching playlist with ID:', playlist_id);
-    
+
     const request = new sql.Request();
     request.input('playlist_id', sql.Int, playlist_id);
-    
+
     // First get playlist details
     const playlistQuery = `
       SELECT 
@@ -870,7 +874,7 @@ router.get('/playlist/:playlist_id', async (req, res) => {
       FROM [Playlist] p
       JOIN [User] u ON p.user_id = u.user_id
       WHERE p.playlist_id = @playlist_id`;
-    
+
     console.log('Executing playlist query...');
     const playlist = await request.query(playlistQuery);
     console.log('Playlist query result:', playlist?.recordset);
@@ -917,13 +921,13 @@ router.get('/playlist/:playlist_id', async (req, res) => {
 //End: get playlist
 //Start: Add song to playlist
 router.post("/playlist/:playlist_id/song", async (req, res) => {
-  try{
+  try {
     //Code to handle request goes here
-    const {playlist_id} = req.params;
-    const {song_id, active} = req.body;
+    const { playlist_id } = req.params;
+    const { song_id, active } = req.body;
 
-    if (!playlist_id || !song_id){
-      return res.status(400).json({message: "Playlist ID and song are required."});
+    if (!playlist_id || !song_id) {
+      return res.status(400).json({ message: "Playlist ID and song are required." });
     }
 
     const request = new sql.Request();
@@ -945,9 +949,9 @@ router.post("/playlist/:playlist_id/song", async (req, res) => {
       res.status(500).json({ error: "Failed to add song to playlist" });
     }
 
-  }catch(err){
+  } catch (err) {
     console.error("Error adding song to playlist:", err);
-    res.status(500).json({error: "Internal server error"});
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 //End: Add Song to Playlist
@@ -1025,11 +1029,11 @@ router.put('/playlist/:playlist_id/title', async (req, res) => {
   try {
     const { playlist_id } = req.params;
     const { title } = req.body;
-    
+
     const request = new sql.Request();
     request.input('playlist_id', sql.Int, playlist_id);
     request.input('title', sql.VarChar(100), title);
-    
+
     const result = await request.query(`
       UPDATE [Playlist]
       SET title = @title,
@@ -1061,11 +1065,11 @@ router.put('/playlist/:playlist_id', async (req, res) => {
   try {
     const { playlist_id } = req.params;
     const { title } = req.body;
-    
+
     const request = new sql.Request();
     request.input('playlist_id', sql.Int, playlist_id);
     request.input('title', sql.VarChar, title);
-    
+
     await request.query(`
       UPDATE [Playlist]
       SET title = @title, updated_at = GETDATE()
@@ -1083,10 +1087,10 @@ router.put('/playlist/:playlist_id', async (req, res) => {
 router.get('/playlists/user/:userId', async (req, res) => {
   try {
     const { userId } = req.params;
-    
+
     const request = new sql.Request();
     request.input('userId', sql.Int, userId);
-    
+
     const result = await request.query(`
       SELECT 
         p.playlist_id,
@@ -1099,7 +1103,7 @@ router.get('/playlists/user/:userId', async (req, res) => {
       WHERE p.user_id = @userId
       ORDER BY p.created_at DESC
     `);
-    
+
     console.log('Found playlists:', result.recordset); // Fixed logging statement
     res.json(result.recordset);
   } catch (err) {
@@ -1351,7 +1355,7 @@ router.delete('/user/delete/:user_id', async (req, res) => {
 router.get('/admin-profile/:user_id', async (req, res) => {
   try {
     const { user_id } = req.params;
-    
+
     const query = `
       SELECT 
         U.user_id, 
@@ -1415,13 +1419,13 @@ router.post('/create-admin', async (req, res) => {
 
     // Hash the password using bcrypt
     const password_hash = await bcrypt.hash(password, 4);
-    
+
     // Define SQL query to insert new admin user into the database
     const myQuery = `
           INSERT INTO [User] (username, password_hash, created_at, role_id)
           OUTPUT inserted.user_id, inserted.username, inserted.role_id
           VALUES (@username, @password_hash, GETDATE(), @role_id)`;
-    
+
     // Create SQL request
     const request = new sql.Request();
     request.input('username', sql.NVarChar, username);
@@ -1430,7 +1434,7 @@ router.post('/create-admin', async (req, res) => {
 
     // Execute the query
     const result = await request.query(myQuery);
-    
+
     if (result?.rowsAffected[0] === 1) {
       // Generate a JWT token for the newly created admin user
       const token = jwt.sign(
