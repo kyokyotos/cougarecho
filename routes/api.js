@@ -357,7 +357,58 @@ router.post("/album-insert", upload.single('img'), async function (req, res) {
     }
   }
 });
+// Get ALbum info and songs.
+router.get('/album/:album_id', async (req, res) => {
+  try {
+    const album_id = req.params.album_id;
+    const request = new sql.Request();
+    request.input('album_id', sql.Int, album_id)
+    const myQuery = 'SELECT Al.album_id, Al.album_name, Ar.artist_id, Ar.artist_name, Al.create_at, \
+        Al.update_at, Al.album_cover  FROM [Album] Al, [Artist] Ar  WHERE Al.artist_id = Ar.artist_id AND Al.album_id = @album_id;';
+    const result = await request.query(myQuery);
+    const album_ = await result?.recordset[0];
+    console.log(album_);
+    if (!album_) {
+      return res.json({ message: "album_id does not exists" });
+    }
 
+    const request2 = new sql.Request();
+    request2.input('album_id', sql.Int, album_id)
+    const myQuery2 = 'SELECT S.song_id, S.song_name, Ar.artist_name,  S.duration, SP.song_plays, \
+      S.album_id, S.created_at, S.isAvailable  FROM [Song] S, [SongPlays] SP, [Artist] Ar WHERE \
+      S.song_id = SP.song_id AND S.artist_id = Ar.artist_id AND S.album_id = @album_id;';
+    const result2 = await request2.query(myQuery2);
+    const songs_ = await result2?.recordset;
+    console.log(songs_.length)
+
+    const payload = {
+      ...album_,
+      songs: [...songs_]
+    }
+    return res.json(payload)
+    /*
+    const songs = result?.recordset?.map((song) => {
+      const base64Image = album.album_cover
+        ? Buffer.from(album.album_cover).toString('base64')
+        : null;
+      return {
+        album_id: album.album_id,
+        album_name: album.album_name,
+        artist_name: album.artist_name,
+        playCount: album.playCount,
+        lastPlayed: album.lastPlayed,
+        album_cover: base64Image ? `data:image/jpeg;base64,${base64Image}` : null, // Include MIME type prefix
+      };
+
+    })*/
+
+    /*console.log([{ ...result?.recordset?.[0], album_cover: null },
+    { ...result?.recordset?.[1], album_cover: null }, { ...result?.recordset?.[2], album_cover: null }])*/
+    return res.json(albums);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // Connection is successfull
 router.post("/artist/profile/update", async (req, res) => {
   try {
@@ -721,11 +772,12 @@ router.get('/artist/:artist_id/notifications', async (req, res) => {
 
     const result = await request.query(query);
 
-    if (result.recordset.length > 0) {
-      res.status(200).json(result.recordset);
-    } else {
-      res.status(404).json({ message: "No notifications found for this artist." });
+    // If no notifications found, return an empty array
+    if (result.recordset.length === 0) {
+      return res.status(200).json([]); // Respond with an empty array
     }
+
+    res.status(200).json(result.recordset);
   } catch (error) {
     console.error("Error fetching notifications:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -755,27 +807,11 @@ router.get('/artist-id/:user_id', async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
-router.put('/artist/:artist_id/notifications/mark-read', async (req, res) => {
-  try {
-    const artist_id = req.params.artist_id;
-    const request = new sql.Request();
-    request.input('artist_id', sql.Int, artist_id);
-
-    // Update query to mark notifications as read by setting count to 0
-    const query = `
-      UPDATE ArtistNotifications
-      SET count = 0
-      WHERE artist_id = @artist_id
-    `;
-
-    await request.query(query);
-    res.status(200).json({ message: "All notifications marked as read." });
-  } catch (error) {
-    console.error("Error marking notifications as read:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
 //End Thinh Bui
+/**********************************************************************************************************************/
+/**********************************************************************************************************************/
+/**********************************************************************************************************************/
+/**********************************************************************************************************************/
 //Will Nguyen Begin
 //Start: Create New Playlist
 router.post("/playlist/new", async (req, res) => {

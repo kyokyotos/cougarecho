@@ -62,7 +62,7 @@ export const PublicRoutes = [
   },
 
   {
-    path: '/album/:id',
+    path: '/album/:album_id',
     element: <AlbumPage />
   },
   {
